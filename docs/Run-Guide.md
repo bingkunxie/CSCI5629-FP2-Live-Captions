@@ -4,7 +4,7 @@ This first implementation records a short Mandarin utterance on Quest 3 and requ
 
 ## Project and scene
 
-- Isolated project: `/Users/bingkunxie/Unity-Projects/CSCI5629-FinalProject`
+- Isolated project: `<project-directory>`
 - Branch: `main`
 - Scene: `Assets/Scenes/FP2LiveCaptions.unity`
 - Android package: `edu.umn.csci5629.livecaptions`
@@ -51,18 +51,18 @@ Install using the existing course key file:
 
 ```sh
 python3 Tools/fp2_device_setup.py \
-  --key-file '/Users/bingkunxie/Unity-Projects/csci5629-A1/.secrets/umn-key.txt' \
+  --key-file '/absolute/path/to/your/course-key.txt' \
   --route direct
 ```
 
-The script installs this separate application, writes the key through stdin into its app data, and launches it. Allow microphone access in the headset when prompted. For Editor testing, set `UMN_GATEWAY_KEY_FILE` to the existing key-file path before starting the isolated Editor, or use the same local `.secrets/umn-key.txt` convention.
+The script installs this separate application, writes the key through stdin into its app data, and launches it. Replace the example key-file path with your own private course key file. Allow microphone access in the headset when prompted. For Editor testing, set `UMN_GATEWAY_KEY_FILE` to the existing key-file path before starting the isolated Editor, or use the same local `.secrets/umn-key.txt` convention.
 
 ## USB/VPN fallback
 
 If the Quest cannot reach UMN directly, connect UMN VPN on the computer and run:
 
 ```sh
-UMN_GATEWAY_KEY_FILE='/Users/bingkunxie/Unity-Projects/csci5629-A1/.secrets/umn-key.txt' \
+UMN_GATEWAY_KEY_FILE='/absolute/path/to/your/course-key.txt' \
   python3 Tools/a3_usb_relay.py
 ```
 

@@ -46,4 +46,12 @@ crashlytics-build.properties
 
 # Local A3 credential (never include in submission)
 .secrets/
+.env
+.env.*
+!.env.example
+umn-key.txt
+gateway-url.txt
+*.keystore
+*.jks
+*.p12
 __pycache__/

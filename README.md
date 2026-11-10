@@ -19,3 +19,16 @@ The prior APK had an Android startup ANR. Its loader was blocked in ZIP decompre
 Validation: independent project imports and compiles; all 12 FP2 EditMode tests passed (`Logs/tests.xml`). The assignment projects remain unchanged. Device startup and one live speech-to-caption flow have been observed; see `docs/BUILD-STATUS.md` for the exact evidence and remaining checks.
 
 Standalone test: the user confirmed successful translation after disconnecting USB and launching the app fresh on eduroam. For the demo, unplug before launching. Changing USB while the app is running may require an app restart to recover microphone capture.
+
+## Open and run
+
+1. Clone this repository and open its root folder in Unity Hub with Unity 6000.6.0f1 and Android Build Support installed.
+2. Let Unity resolve the packages, then open `Assets/Scenes/FP2LiveCaptions.unity`.
+3. Obtain your own authorized UMN course gateway access. Keep the key outside the repository and set `UMN_GATEWAY_KEY_FILE` to its private file path for Editor testing.
+4. Follow the [run guide](docs/Run-Guide.md) for building, device setup, and controls.
+
+The gateway requires campus network access or the appropriate UMN VPN route. Credentials, APKs, recordings, logs, and Unity-generated caches are intentionally excluded from this repository.
+
+## Credits and dependencies
+
+This course prototype reuses the instructor-provided A3 HTTP/WAV helpers and uses Unity, Meta XR, TextMeshPro, and their dependencies. Existing third-party license and notice files are retained; their terms continue to apply. No additional project-wide license is asserted here.
