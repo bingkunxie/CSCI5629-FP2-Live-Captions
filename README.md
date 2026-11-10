@@ -1,5 +1,3 @@
-# CSCI 5629 Final Project
-
 Independent Unity project for Quest 3 Mandarin-to-English captions. This is not a Git worktree of the assignment repository.
 
 - Unity: 6000.6.0f1, Universal Render Pipeline, Meta XR / OpenXR.
