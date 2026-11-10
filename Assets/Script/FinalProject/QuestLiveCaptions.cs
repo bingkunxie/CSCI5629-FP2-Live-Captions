@@ -92,6 +92,7 @@ public sealed class QuestLiveCaptions : MonoBehaviour
     [ContextMenu("Begin Listening")]
     public void BeginListening()
     {
+        Debug.Log("[FP2] Trigger begin state=" + (session == null ? "Unconfigured" : session.State.ToString()));
         if (!isActiveAndEnabled) return;
         if (session == null) ConfigureGateway();
         if (session == null) return;
@@ -111,6 +112,8 @@ public sealed class QuestLiveCaptions : MonoBehaviour
             recording = Microphone.Start(microphone, false, maxRecordingSeconds, sampleRate);
             if (recording == null) throw new InvalidOperationException();
             recordingStarted = Time.realtimeSinceStartup;
+            Debug.Log("[FP2] Microphone start active=" + Microphone.IsRecording(microphone) +
+                " frequency=" + recording.frequency + " capacity_frames=" + recording.samples);
         }
         catch (Exception) { session.RejectCapture("Microphone did not start. Check permission and retry."); }
     }
@@ -120,7 +123,10 @@ public sealed class QuestLiveCaptions : MonoBehaviour
     {
         if (recording == null || session == null) return;
         captureEnded = Stopwatch.GetTimestamp();
-        int frames = Microphone.IsRecording(microphone) ? Microphone.GetPosition(microphone) : recording.samples;
+        bool microphoneActive = Microphone.IsRecording(microphone);
+        int frames = microphoneActive ? Microphone.GetPosition(microphone) : recording.samples;
+        Debug.Log("[FP2] Trigger stop elapsed_s=" + (Time.realtimeSinceStartup - recordingStarted).ToString("F3") +
+            " active=" + microphoneActive + " position_frames=" + frames + " frequency=" + recording.frequency);
         Microphone.End(microphone);
         AudioClip captured = recording;
         recording = null;
@@ -145,6 +151,7 @@ public sealed class QuestLiveCaptions : MonoBehaviour
 
     public void CancelCurrentTurn()
     {
+        Debug.Log("[FP2] Cancel state=" + (session == null ? "Unconfigured" : session.State.ToString()) + " recording=" + (recording != null));
         if (recording != null)
         {
             Microphone.End(microphone);

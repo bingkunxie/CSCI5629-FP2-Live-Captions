@@ -14,6 +14,7 @@ using UnityEngine.InputSystem;
 public static class FP2Setup
 {
     public static bool UsbDevelopmentBuild;
+    private static bool cleanBuild;
     public const string ScenePath = "Assets/Scenes/FP2LiveCaptions.unity";
     public const string PackageId = "edu.umn.csci5629.livecaptions";
 
@@ -42,6 +43,11 @@ public static class FP2Setup
 
     public static void PrepareBatch() => RunBatch(CreateScene);
     public static void BuildBatch() => RunBatch(Build);
+    public static void BuildCleanBatch()
+    {
+        cleanBuild = true;
+        RunBatch(Build);
+    }
 
     private static void RunBatch(Action action)
     {
@@ -116,7 +122,8 @@ public static class FP2Setup
             UsbDevelopmentBuild = true;
             report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
                 scenes = new[] { ScenePath }, target = BuildTarget.Android,
-                locationPathName = "build/FP2/FP2-Live-Captions.apk", options = BuildOptions.Development
+                locationPathName = "build/FP2/FP2-Live-Captions.apk",
+                options = BuildOptions.Development | (cleanBuild ? BuildOptions.CleanBuildCache : BuildOptions.None)
             });
         }
         finally
