@@ -1,0 +1,217 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-4148001096141354976
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: LiveCaptions/NextPage
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: 11400000}
+  m_ActionId: 120a902e-d803-4eb1-b555-e3ecc8eeda11
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39fa3d8997a24136984ca6e2c99902bc, type: 3}
+  m_Name: CaptionInput
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionAsset
+  m_ActionMaps:
+  - m_Name: LiveCaptions
+    m_Id: 2b63dde9-f746-4279-8d8f-ecc536feb575
+    m_Asset: {fileID: 11400000}
+    m_Actions:
+    - m_Name: BeginListening
+      m_Type: 1
+      m_ExpectedControlType: 
+      m_Id: 30daad6e-6de2-4809-9a49-bf9c1aeb40ad
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+      m_Priority: 0
+    - m_Name: StopListening
+      m_Type: 1
+      m_ExpectedControlType: 
+      m_Id: 60df17b3-22bd-40b0-a41b-afc645574b12
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+      m_Priority: 0
+    - m_Name: Cancel
+      m_Type: 1
+      m_ExpectedControlType: 
+      m_Id: a104edcd-2222-42be-844a-3807ed722cbd
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+      m_Priority: 0
+    - m_Name: Height
+      m_Type: 1
+      m_ExpectedControlType: 
+      m_Id: 24a7096f-9176-4eda-9d52-8dd3b45a351e
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+      m_Priority: 0
+    - m_Name: NextPage
+      m_Type: 1
+      m_ExpectedControlType: 
+      m_Id: 120a902e-d803-4eb1-b555-e3ecc8eeda11
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+      m_Priority: 0
+    m_Bindings:
+    - m_Name: 
+      m_Id: 9c9b0316-51ca-4061-b4ff-5ba211d86c9c
+      m_Path: <XRController>{RightHand}/trigger
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: BeginListening
+      m_Flags: 0
+    - m_Name: 
+      m_Id: cbbf4be4-0ff1-4304-afd7-7cdacd50aa7a
+      m_Path: <Keyboard>/space
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: BeginListening
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 13d0744f-43be-41bc-9bb1-107b11e6a65b
+      m_Path: <XRController>{RightHand}/trigger
+      m_Interactions: press(behavior=1)
+      m_Processors: 
+      m_Groups: 
+      m_Action: StopListening
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 25bd4411-9482-4a23-ac7d-60ede8462c05
+      m_Path: <Keyboard>/space
+      m_Interactions: press(behavior=1)
+      m_Processors: 
+      m_Groups: 
+      m_Action: StopListening
+      m_Flags: 0
+    - m_Name: 
+      m_Id: ee460427-8a8b-4b0c-83b4-151ffe084861
+      m_Path: <XRController>{LeftHand}/trigger
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: Cancel
+      m_Flags: 0
+    - m_Name: 
+      m_Id: a3dabb62-e955-4cbc-a7b4-912095d8243f
+      m_Path: <Keyboard>/escape
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: Cancel
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 6ba6e30c-9bc9-41d4-9043-066044028015
+      m_Path: <XRController>{LeftHand}/primaryButton
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: Height
+      m_Flags: 0
+    - m_Name: 
+      m_Id: f35e8439-df3d-46f7-946e-e79a99929801
+      m_Path: <Keyboard>/h
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: Height
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 05022694-8eec-4bd5-9d2d-fc8de660ce79
+      m_Path: <XRController>{RightHand}/primaryButton
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: NextPage
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 30679d4e-4512-4f6c-a3c1-823b7cd5e1f5
+      m_Path: <Keyboard>/rightArrow
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: NextPage
+      m_Flags: 0
+  m_ControlSchemes: []
+  m_IsProjectWide: 0
+--- !u!114 &3299344182111232875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: LiveCaptions/Cancel
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: 11400000}
+  m_ActionId: a104edcd-2222-42be-844a-3807ed722cbd
+--- !u!114 &4534161747763699232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: LiveCaptions/StopListening
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: 11400000}
+  m_ActionId: 60df17b3-22bd-40b0-a41b-afc645574b12
+--- !u!114 &7075919165616959337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: LiveCaptions/Height
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: 11400000}
+  m_ActionId: 24a7096f-9176-4eda-9d52-8dd3b45a351e
+--- !u!114 &7097994391161817879
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: LiveCaptions/BeginListening
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: 11400000}
+  m_ActionId: 30daad6e-6de2-4809-9a49-bf9c1aeb40ad

@@ -1,0 +1,6 @@
+{
+  "name": "FP2.Caption.Core",
+  "rootNamespace": "FP2.Captions",
+  "autoReferenced": true,
+  "noEngineReferences": true
+}
