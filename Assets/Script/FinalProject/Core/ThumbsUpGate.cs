@@ -22,8 +22,10 @@ namespace FP2.Captions
         /// observation; native tracking must stabilize. sampleTime deduplicates delayed camera results
         /// against native gestures observed while that frame was being classified.
         /// </summary>
-        public bool Observe(ThumbsUpSource source, bool? detected, double time, double? sampleTime = null)
+        public bool NativeGestureIsHeld => IsCurrentlyHeld(ThumbsUpSource.LeftHand) || IsCurrentlyHeld(ThumbsUpSource.RightHand);
+        public bool Observe(ThumbsUpSource source, bool? detected, double time, double? sampleTime = null, bool nativeHeldAtCapture = false)
         {
+            if (source == ThumbsUpSource.Camera && sampleTime.HasValue && time - sampleTime.Value > 5) return false;
             Pose pose = poses[(int)source];
             if (!detected.HasValue)
             {
@@ -46,6 +48,7 @@ namespace FP2.Captions
             // Consume duplicates too; a continuously held pose must not pop later when cooldown ends.
             pose.Held = true;
             if ((sampleTime ?? time) - lastPop < CooldownSeconds) return false;
+            if (source == ThumbsUpSource.Camera && nativeHeldAtCapture) return false;
             if (source == ThumbsUpSource.Camera &&
                 (IsCurrentlyHeld(ThumbsUpSource.LeftHand) || IsCurrentlyHeld(ThumbsUpSource.RightHand))) return false;
             lastPop = time;

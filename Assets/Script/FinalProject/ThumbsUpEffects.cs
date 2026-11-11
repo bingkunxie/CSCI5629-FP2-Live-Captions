@@ -18,6 +18,7 @@ public sealed class ThumbsUpEffects : MonoBehaviour
     [SerializeField] private ShapeRecognizerActiveState rightShape;
     [SerializeField] private TransformRecognizerActiveState leftOrientation;
     [SerializeField] private TransformRecognizerActiveState rightOrientation;
+    [SerializeField] private SkinnedMeshRenderer[] handVisualRenderers = Array.Empty<SkinnedMeshRenderer>();
     [SerializeField] private PassthroughCameraAccess cameraAccess;
     [SerializeField] private RectTransform effectRoot;
     [SerializeField] private CanvasGroup effectOpacity;
@@ -50,6 +51,10 @@ public sealed class ThumbsUpEffects : MonoBehaviour
 
     private void Awake()
     {
+        // SDK hand visuals toggle Renderer.enabled as tracking changes. This separate render-only
+        // flag keeps passthrough clear without disabling skeleton updates or hand-pose providers.
+        foreach (var renderer in handVisualRenderers)
+            if (renderer != null) renderer.forceRenderingOff = true;
         if (cameraAccess != null) cameraAccess.enabled = false;
         if (effectRoot != null) effectPosition = effectRoot.anchoredPosition;
         if (effectOpacity != null) effectOpacity.alpha = 0;
@@ -146,6 +151,7 @@ public sealed class ThumbsUpEffects : MonoBehaviour
         try
         {
             double capturedAt = Time.unscaledTimeAsDouble;
+            bool nativeHeldAtCapture = gate.NativeGestureIsHeld;
             Texture source = cameraAccess.GetTexture();
             if (source == null || source.width < 1 || source.height < 1) return;
             int width = Mathf.Min(640, source.width);
@@ -168,7 +174,7 @@ public sealed class ThumbsUpEffects : MonoBehaviour
             SetCameraStatus("Camera on: checking gesture");
             bool detected = await classifier(jpeg, operation.Token);
             if (!IsCurrent(current) || operation.IsCancellationRequested) return;
-            if (gate.Observe(ThumbsUpSource.Camera, detected, Time.unscaledTimeAsDouble, capturedAt))
+            if (gate.Observe(ThumbsUpSource.Camera, detected, Time.unscaledTimeAsDouble, capturedAt, nativeHeldAtCapture))
                 Pop(Time.unscaledTimeAsDouble);
             SetCameraStatus("Camera on: frames sent for gesture checks");
         }

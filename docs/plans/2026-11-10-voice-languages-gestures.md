@@ -30,3 +30,15 @@ Requested: optional translated speech, Mandarin/English direction switching, and
 - Preserve a working development build and `adb run-as` credential provisioning.
 
 The user explicitly revoked the earlier 5 p.m. cutoff and instructed implementation to continue. Completion still requires implementation and headset testing.
+
+## Implementation evidence
+
+- Initial gate/voice tests ran against contract stubs: 11 expected failures.
+- Reverse-language and speech-adapter tests exposed the expected missing behavior; all were then implemented.
+- Scene reference test failed before wiring the new mode label, audio source, and gesture component; upgraded scene now passes.
+- Independent review found delayed camera results could echo a previously consumed wearer gesture. Added 3 failing regressions, then snapshot native held state at frame capture and reject camera frames older than 5 seconds.
+- Reviewed suite: 35 tests passed, 0 failed (`Logs/FP2/features-reviewed-tests.xml`).
+- Course service smoke checks: English TTS and Mandarin-specific Xiaoxiao TTS returned PCM16 WAV; default English voice returned empty Chinese audio and was replaced for Mandarin. Blank-image vision request returned false in 1.6 s.
+- Android build succeeded; device playback, Chinese rendering, and both gesture paths still require headset checks.
+
+- Hardware screenshot exposed oversized inherited hand meshes. The fix preserves tracking/skeleton/provider components and uses `forceRenderingOff` only on hand-associated renderers and hand-template meshes. Scene setup and all 35 tests passed; updated APK installed. Visual and functional headset feedback is pending.

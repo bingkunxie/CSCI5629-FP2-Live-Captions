@@ -26,5 +26,8 @@ public class CaptionSceneTests
         Assert.That(panel.localPosition.z, Is.InRange(1f, 2f));
         Assert.That(panel.rect.width, Is.GreaterThan(0));
         Assert.That(components.Any(c => c.GetType().Name == "ControllerButtonsMapper"), Is.True);
+        var gestures = components.Single(c => c.GetType().Name == "ThumbsUpEffects");
+        var gestureFields = new SerializedObject(gestures);
+        Assert.That(gestureFields.FindProperty("handVisualRenderers").arraySize, Is.GreaterThan(0), "Tracked-hand visuals must be identified for passthrough rendering.");
     }
 }

@@ -1,4 +1,4 @@
-Independent Unity project for Quest 3 Mandarin-to-English captions. This is not a Git worktree of the assignment repository.
+Independent Unity project for Quest 3 Mandarin–English captions, optional translated speech, and thumbs-up effects.
 
 - Unity: 6000.6.0f1, Universal Render Pipeline, Meta XR / OpenXR.
 - Main scene: `Assets/Scenes/FP2LiveCaptions.unity`.
@@ -8,7 +8,7 @@ Independent Unity project for Quest 3 Mandarin-to-English captions. This is not 
 
 Reuses the course gateway HTTP/WAV helpers and Quest setup from A3. Assignment scenes and A2/A3/A4 application scripts have been removed. Caption cancellation, paging, controller mappings and UI are retained.
 
-Hold the right trigger to record Mandarin; release to translate. Left trigger cancels, X changes height, A advances long captions. Voice output is not implemented in this milestone.
+Hold the right trigger to record; release to translate. Left trigger cancels, X changes height, and A advances long captions. B toggles translated voice, Y switches translation direction, and left grip toggles camera gesture detection. See [feature controls and validation](docs/Features.md).
 
 Use the existing course key via `UMN_GATEWAY_KEY_FILE` in the Editor. No credential was copied into this project. Android setup writes the existing key into private app data using `Tools/fp2_device_setup.py`.
 

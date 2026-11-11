@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Meta.XR;
+using Oculus.Interaction;
+using Oculus.Interaction.Input;
 using Oculus.Interaction.PoseDetection;
 using UnityEditor;
 using UnityEngine;
@@ -60,6 +62,17 @@ public static class ThumbsUpEffectsSetup
         Set(settings, "rightShape", rightShape);
         Set(settings, "leftOrientation", leftOrientation);
         Set(settings, "rightOrientation", rightOrientation);
+        var handRenderers = FindHandVisualRenderers(owner);
+        var rendererReferences = settings.FindProperty("handVisualRenderers");
+        rendererReferences.arraySize = handRenderers.Count;
+        for (int i = 0; i < handRenderers.Count; i++)
+        {
+            rendererReferences.GetArrayElementAtIndex(i).objectReferenceValue = handRenderers[i];
+            handRenderers[i].forceRenderingOff = true;
+            EditorUtility.SetDirty(handRenderers[i]);
+            if (PrefabUtility.IsPartOfPrefabInstance(handRenderers[i]))
+                PrefabUtility.RecordPrefabInstancePropertyModifications(handRenderers[i]);
+        }
         Set(settings, "cameraAccess", camera);
         Set(settings, "effectRoot", root);
         Set(settings, "effectOpacity", opacity);
@@ -67,6 +80,30 @@ public static class ThumbsUpEffectsSetup
         settings.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(effects);
         return effects;
+    }
+
+    private static List<SkinnedMeshRenderer> FindHandVisualRenderers(GameObject owner)
+    {
+        var renderers = new List<SkinnedMeshRenderer>();
+        foreach (var visual in UnityEngine.Object.FindObjectsByType<HandVisual>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (visual.gameObject.scene != owner.scene) continue;
+            // Use the SDK's two explicit model references, rather than every mesh under the rig.
+            var settings = new SerializedObject(visual);
+            foreach (string field in new[] { "_skinnedMeshRenderer", "_openXRSkinnedMeshRenderer" })
+            {
+                var renderer = settings.FindProperty(field).objectReferenceValue as SkinnedMeshRenderer;
+                if (renderer != null && renderer.gameObject.scene == owner.scene && !renderers.Contains(renderer)) renderers.Add(renderer);
+            }
+        }
+        foreach (var template in UnityEngine.Object.FindObjectsByType<FromHandPrefabDataSource>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (template.gameObject.scene != owner.scene || template.name != "HandSphereMap" ||
+                !HasAncestor(template.transform, "TouchControllerHandGrabInteractor")) continue;
+            foreach (var renderer in template.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                if (!renderers.Contains(renderer)) renderers.Add(renderer);
+        }
+        return renderers;
     }
 
     private static FingerFeatureStateProvider FindProvider(GameObject owner, string side)

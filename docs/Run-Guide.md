@@ -1,6 +1,6 @@
 # FP2 Mandarin-to-English captions
 
-This first implementation records a short Mandarin utterance on Quest 3 and requests an English translation through the UMN course gateway. It is turn-based, not continuous streaming. It does not synthesize translated voice yet.
+This first implementation records a short Mandarin utterance on Quest 3 and requests an English translation through the UMN course gateway. It is turn-based, not continuous streaming. The feature branch adds optional translated voice, reverse translation, and thumbs-up effects; see [Features](Features.md) for the additional controls and validation status.
 
 ## Project and scene
 
@@ -22,6 +22,9 @@ This is an independent Unity project and repository. It reuses the caption syste
 | Cancel capture/request | Left trigger | Escape |
 | Change panel height | X | H |
 | Next page of a long translation | A | Right arrow |
+| Voice on/off | B | V |
+| Translation direction | Y | L |
+| Camera gestures on/off | Left grip | G |
 
 Recordings stop automatically after 15 seconds. Too-short or very quiet input is rejected locally. A previous translation remains visible during a new request and is labeled as previous. Long translations use pages at a stable font size. Networking and processing states remain visible.
 

@@ -3,6 +3,28 @@ using NUnit.Framework;
 
 public class ThumbsUpGateTests
 {
+    [TestCase(8d)]
+    [TestCase(12d)]
+    public void FrameCapturedDuringConsumedNativePoseDoesNotPopAfterRelease(double responseTime)
+    {
+        var gate = new ThumbsUpGate();
+        gate.Observe(ThumbsUpSource.LeftHand, true, 0);
+        Assert.That(gate.Observe(ThumbsUpSource.LeftHand, true, .3), Is.True);
+        gate.Observe(ThumbsUpSource.LeftHand, true, 6);
+        bool snapshot = gate.NativeGestureIsHeld;
+        gate.Observe(ThumbsUpSource.LeftHand, false, 7);
+        gate.Observe(ThumbsUpSource.LeftHand, false, 7.3);
+        Assert.That(gate.Observe(ThumbsUpSource.Camera, true, responseTime, 6, snapshot), Is.False);
+    }
+
+    [Test]
+    public void StaleCameraFrameDoesNotPopOrConsumeAFreshGesture()
+    {
+        var gate = new ThumbsUpGate();
+        Assert.That(gate.Observe(ThumbsUpSource.Camera, true, 10, 0), Is.False);
+        Assert.That(gate.Observe(ThumbsUpSource.Camera, true, 11, 10), Is.True);
+    }
+
     [Test]
     public void NativePoseMustRemainStableAndOnlyPopsOnceWhileHeld()
     {
