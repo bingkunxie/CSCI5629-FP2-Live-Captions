@@ -23,11 +23,15 @@ namespace FP2.Captions
     public sealed class CaptionSession : IDisposable
     {
         private readonly ICaptionGateway gateway;
+        private readonly TranslationDirection direction;
         private CancellationTokenSource active;
         private int generation;
         private bool disposed;
 
-        public CaptionSession(ICaptionGateway gateway) => this.gateway = gateway ?? throw new ArgumentNullException(nameof(gateway));
+        public CaptionSession(ICaptionGateway gateway, TranslationDirection direction = TranslationDirection.MandarinToEnglish)
+        { this.gateway = gateway ?? throw new ArgumentNullException(nameof(gateway)); this.direction = direction; }
+        private string SourceLanguage => direction == TranslationDirection.MandarinToEnglish ? "Mandarin" : "English";
+        private string TargetLanguage => direction == TranslationDirection.MandarinToEnglish ? "English" : "Mandarin";
         public CaptionState State { get; private set; }
         public string Caption { get; private set; } = "";
         public int CaptionRevision { get; private set; }
@@ -43,7 +47,7 @@ namespace FP2.Captions
             if (disposed || State == CaptionState.Listening || State == CaptionState.Transcribing || State == CaptionState.Translating) return false;
             generation++;
             CaptionIsPrevious = Caption.Length > 0;
-            SetState(CaptionState.Listening, "Listening to Mandarin…");
+            SetState(CaptionState.Listening, "Listening to " + SourceLanguage + "…");
             return true;
         }
 
@@ -58,13 +62,13 @@ namespace FP2.Captions
             TranscriptionSeconds = TranslationSeconds = ProcessingSeconds = 0;
             try
             {
-                SetState(CaptionState.Transcribing, "Recognizing Mandarin…");
+                SetState(CaptionState.Transcribing, "Recognizing " + SourceLanguage + "…");
                 string transcript = (await gateway.TranscribeAsync(audio, operation.Token))?.Trim();
                 operation.Token.ThrowIfCancellationRequested();
                 if (!IsCurrent(turn)) return;
                 TranscriptionSeconds = clock.Elapsed.TotalSeconds;
                 if (string.IsNullOrWhiteSpace(transcript)) { SetState(CaptionState.Error, "No speech detected. Please try again."); return; }
-                SetState(CaptionState.Translating, "Translating to English…");
+                SetState(CaptionState.Translating, "Translating to " + TargetLanguage + "…");
                 string translation = (await gateway.TranslateAsync(transcript, operation.Token))?.Trim();
                 operation.Token.ThrowIfCancellationRequested();
                 if (!IsCurrent(turn)) return;

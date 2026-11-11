@@ -22,7 +22,7 @@ public static class FP2Setup
     public static void CreateScene()
     {
         if (!File.Exists(ScenePath)) throw new InvalidOperationException("Final-project caption scene is missing.");
-        UpdateLayout();
+        CaptionFeatureSetup.Upgrade();
         Validate();
     }
 
@@ -97,14 +97,14 @@ public static class FP2Setup
         if (UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None).Any(c => c != null && c.GetType().Name == "A3TalkingCube"))
             throw new InvalidOperationException("A3 chatbot still present.");
         var settings = new SerializedObject(caption);
-        foreach (string field in new[] { "captionText", "statusText", "hintText", "panel" })
+        foreach (string field in new[] { "captionText", "statusText", "hintText", "panel", "languageLabel", "modeText", "voiceOutput", "gestures" })
             if (settings.FindProperty(field).objectReferenceValue == null) throw new InvalidOperationException("Missing " + field);
         var mapper = UnityEngine.Object.FindFirstObjectByType<ControllerButtonsMapper>();
-        if (mapper == null || mapper.ButtonClickActions.Count != 5) throw new InvalidOperationException("Missing controller mappings.");
+        if (mapper == null || mapper.ButtonClickActions.Count != 8) throw new InvalidOperationException("Missing controller mappings.");
         foreach (var action in mapper.ButtonClickActions)
             if (action.InputActionReference == null || action.Callback.GetPersistentEventCount() != 1 || action.Callback.GetPersistentTarget(0) != caption)
                 throw new InvalidOperationException("Broken caption input mapping.");
-        Debug.Log("[FP2] PASS: caption scene, five controller callbacks, and view references.");
+        Debug.Log("[FP2] PASS: caption scene, eight controller callbacks, and view references.");
     }
 
     public static void Build()

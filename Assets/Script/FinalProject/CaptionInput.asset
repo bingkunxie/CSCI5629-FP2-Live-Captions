@@ -14,6 +14,34 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: 11400000}
   m_ActionId: 120a902e-d803-4eb1-b555-e3ecc8eeda11
+--- !u!114 &-3433669279782336113
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: LiveCaptions/Language
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: 11400000}
+  m_ActionId: bd90ed8f-7a19-45dc-8819-1f14917534b5
+--- !u!114 &-2438512552813215142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: LiveCaptions/CameraGestures
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: 11400000}
+  m_ActionId: 2439b16a-2693-4cfa-9065-70d1676e9391
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -71,6 +99,33 @@ MonoBehaviour:
       m_Type: 1
       m_ExpectedControlType: 
       m_Id: 120a902e-d803-4eb1-b555-e3ecc8eeda11
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+      m_Priority: 0
+    - m_Name: Voice
+      m_Type: 1
+      m_ExpectedControlType: 
+      m_Id: 3122a2a1-d3a7-43f0-8bb6-8ced666a291c
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+      m_Priority: 0
+    - m_Name: Language
+      m_Type: 1
+      m_ExpectedControlType: 
+      m_Id: bd90ed8f-7a19-45dc-8819-1f14917534b5
+      m_Processors: 
+      m_Interactions: 
+      m_SingletonActionBindings: []
+      m_Flags: 0
+      m_Priority: 0
+    - m_Name: CameraGestures
+      m_Type: 1
+      m_ExpectedControlType: 
+      m_Id: 2439b16a-2693-4cfa-9065-70d1676e9391
       m_Processors: 
       m_Interactions: 
       m_SingletonActionBindings: []
@@ -157,8 +212,70 @@ MonoBehaviour:
       m_Groups: 
       m_Action: NextPage
       m_Flags: 0
+    - m_Name: 
+      m_Id: 1970b77c-cd14-41f8-b1a0-1edd47927253
+      m_Path: <XRController>{RightHand}/secondaryButton
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: Voice
+      m_Flags: 0
+    - m_Name: 
+      m_Id: ccbedc06-aa14-4dd4-a640-d505db9461c5
+      m_Path: <Keyboard>/v
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: Voice
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 6fe4c69a-b224-48a3-8674-960c4cdf11d7
+      m_Path: <XRController>{LeftHand}/secondaryButton
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: Language
+      m_Flags: 0
+    - m_Name: 
+      m_Id: f97b7518-e0c8-4d3b-8318-739f5f01b4e2
+      m_Path: <Keyboard>/l
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: Language
+      m_Flags: 0
+    - m_Name: 
+      m_Id: 276bec0b-d09e-4bc4-badd-8af328d37170
+      m_Path: <XRController>{LeftHand}/grip
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: CameraGestures
+      m_Flags: 0
+    - m_Name: 
+      m_Id: ae0e887a-1b8f-4584-8da5-df685ca0026b
+      m_Path: <Keyboard>/g
+      m_Interactions: press(behavior=0)
+      m_Processors: 
+      m_Groups: 
+      m_Action: CameraGestures
+      m_Flags: 0
   m_ControlSchemes: []
   m_IsProjectWide: 0
+--- !u!114 &1404387783199813767
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: LiveCaptions/Voice
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: 11400000}
+  m_ActionId: 3122a2a1-d3a7-43f0-8bb6-8ced666a291c
 --- !u!114 &3299344182111232875
 MonoBehaviour:
   m_ObjectHideFlags: 0

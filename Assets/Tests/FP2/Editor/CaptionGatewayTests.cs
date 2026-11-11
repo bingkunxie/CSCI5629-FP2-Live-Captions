@@ -74,6 +74,97 @@ public class CaptionGatewayTests
     }
 
     [Test]
+    public async Task ReverseDirectionSendsEnglishAudioAndReturnsMandarin()
+    {
+        using var listener = Listen(out string endpoint);
+        string multipart = null, chatJson = null;
+        var serve = Task.Run(async () => {
+            var first = await listener.GetContextAsync();
+            using (var reader = new StreamReader(first.Request.InputStream)) multipart = await reader.ReadToEndAsync();
+            await Respond(first, "{\"text\":\"The meeting starts at four.\"}");
+            var second = await listener.GetContextAsync();
+            using (var reader = new StreamReader(second.Request.InputStream)) chatJson = await reader.ReadToEndAsync();
+            await Respond(second, "{\"choices\":[{\"message\":{\"content\":\"会议四点开始。\"}}]}");
+        });
+        var type = Type.GetType("MandarinCaptionGateway, Assembly-CSharp");
+        var gateway = (ICaptionGateway)Activator.CreateInstance(type, endpoint, "local-test-key", TranslationDirection.EnglishToMandarin);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        string transcript = await gateway.TranscribeAsync(new byte[] { 82, 73, 70, 70 }, timeout.Token);
+        string result = await gateway.TranslateAsync(transcript, timeout.Token);
+        await serve;
+        string language = Regex.Match(multipart, "name=\"language\"[^\\r\\n]*\\r\\n(?:[^\\r\\n]+\\r\\n)*\\r\\n([^\\r\\n]*)").Groups[1].Value;
+        Assert.That(language, Is.EqualTo("en"));
+        var request = JsonUtility.FromJson<ChatRequest>(chatJson);
+        Assert.That(request.messages[0].content, Does.Contain("Mandarin Chinese"));
+        Assert.That(request.messages[1].content, Is.EqualTo("The meeting starts at four."));
+        Assert.That(result, Is.EqualTo("会议四点开始。"));
+    }
+
+    [Serializable] private class SpeechRequest { public string model; public string input; public string voice; public string response_format; }
+
+    [Test]
+    public async Task MandarinSpeechUsesMandarinVoiceAndExactCaption()
+    {
+        using var listener = Listen(out string endpoint);
+        string body = null;
+        var serve = Task.Run(async () => {
+            var context = await listener.GetContextAsync();
+            using (var reader = new StreamReader(context.Request.InputStream)) body = await reader.ReadToEndAsync();
+            byte[] wav = new byte[48]; Encoding.ASCII.GetBytes("RIFF").CopyTo(wav, 0);
+            context.Response.StatusCode = 200; context.Response.ContentType = "audio/wav"; context.Response.ContentLength64 = wav.Length;
+            await context.Response.OutputStream.WriteAsync(wav, 0, wav.Length); context.Response.Close();
+        });
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        byte[] result = await ((IVoiceSynthesis)Gateway(endpoint)).SynthesizeAsync("会议四点开始。", "zh", timeout.Token);
+        Assert.That(result.Length, Is.GreaterThan(44));
+        await serve;
+        var request = JsonUtility.FromJson<SpeechRequest>(body);
+        Assert.That(request.input, Is.EqualTo("会议四点开始。"));
+        Assert.That(request.voice, Is.EqualTo("zh-CN-XiaoxiaoNeural"));
+        Assert.That(request.response_format, Is.EqualTo("wav"));
+    }
+
+    [Test]
+    public async Task VisionClassificationRequiresABooleanAndSendsAnImage()
+    {
+        using var listener = Listen(out string endpoint);
+        string body = null;
+        var serve = Task.Run(async () => {
+            var context = await listener.GetContextAsync();
+            using (var reader = new StreamReader(context.Request.InputStream)) body = await reader.ReadToEndAsync();
+            await Respond(context, "{\"choices\":[{\"message\":{\"content\":\"{\\\"thumbs_up\\\":true}\"}}]}");
+        });
+        var instance = Gateway(endpoint);
+        var method = instance.GetType().GetMethod("ClassifyThumbsUpAsync");
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        bool result = await (Task<bool>)method.Invoke(instance, new object[] { new byte[] { 255, 216, 255, 217 }, timeout.Token });
+        await serve;
+        Assert.That(result, Is.True);
+        Assert.That(body, Does.Contain("data:image/jpeg;base64,/9j/2Q=="));
+        Assert.That(body, Does.Contain("json_object"));
+    }
+
+    [Test]
+    public async Task VisionDoesNotAcceptStringTrueAsAGesture()
+    {
+        using var listener = Listen(out string endpoint);
+        var serve = Task.Run(async () => {
+            var context = await listener.GetContextAsync();
+            await Respond(context, "{\"choices\":[{\"message\":{\"content\":\"{\\\"thumbs_up\\\":\\\"true\\\"}\"}}]}");
+        });
+        var instance = Gateway(endpoint);
+        var method = instance.GetType().GetMethod("ClassifyThumbsUpAsync");
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        try
+        {
+            await (Task<bool>)method.Invoke(instance, new object[] { new byte[] { 255, 216, 255, 217 }, timeout.Token });
+            Assert.Fail("Malformed model output must not trigger the effect.");
+        }
+        catch (CaptionServiceException error) { Assert.That(error.Failure, Is.EqualTo(CaptionFailure.InvalidResponse)); }
+        await serve;
+    }
+
+    [Test]
     public async Task UnauthorizedGatewayResponseBecomesSafeAccessError()
     {
         using var listener = Listen(out string endpoint);

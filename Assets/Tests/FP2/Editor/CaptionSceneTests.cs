@@ -16,7 +16,7 @@ public class CaptionSceneTests
         Assert.That(components.Any(c => c.GetType().Name == "A3TalkingCube"), Is.False, "The final project must not run the talking-cube chatbot.");
         var caption = components.Single(c => c.GetType().Name == "QuestLiveCaptions");
         var serialized = new SerializedObject(caption);
-        foreach (string field in new[] { "captionText", "statusText", "hintText", "panel" })
+        foreach (string field in new[] { "captionText", "statusText", "hintText", "panel", "languageLabel", "modeText", "voiceOutput", "gestures" })
             Assert.That(serialized.FindProperty(field)?.objectReferenceValue, Is.Not.Null, field + " must be wired.");
         var status = (Component)serialized.FindProperty("statusText").objectReferenceValue;
         Assert.That(status.GetComponent<RectTransform>().rect.height, Is.GreaterThanOrEqualTo(60), "Error status needs two readable lines.");
