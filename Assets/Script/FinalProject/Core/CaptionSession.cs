@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace FP2.Captions
 {
-    public enum CaptionState { Ready, Listening, Transcribing, Translating, Error }
+    public enum CaptionState { Ready, Listening, Transcribing, Translating, Reviewing, Error }
     public interface ICaptionGateway
     {
         Task<string> TranscribeAsync(byte[] audio, CancellationToken token);
@@ -34,6 +34,11 @@ namespace FP2.Captions
         private string TargetLanguage => direction == TranslationDirection.MandarinToEnglish ? "English" : "Mandarin";
         public CaptionState State { get; private set; }
         public string Caption { get; private set; } = "";
+        public string Transcript { get; private set; } = "";
+        public string DraftTranscript { get; private set; } = "";
+        public string DraftCaption { get; private set; } = "";
+        public string TurnId { get; private set; } = "";
+        public bool WasReviewed { get; private set; }
         public int CaptionRevision { get; private set; }
         public bool CaptionIsPrevious { get; private set; }
         public string Status { get; private set; } = "Ready";
@@ -46,12 +51,13 @@ namespace FP2.Captions
         {
             if (disposed || State == CaptionState.Listening || State == CaptionState.Transcribing || State == CaptionState.Translating) return false;
             generation++;
+            DraftTranscript = DraftCaption = "";
             CaptionIsPrevious = Caption.Length > 0;
             SetState(CaptionState.Listening, "Listening to " + SourceLanguage + "…");
             return true;
         }
 
-        public async Task SubmitAsync(byte[] audio)
+        public async Task SubmitAsync(byte[] audio, bool requireReview = false)
         {
             if (disposed || State != CaptionState.Listening) return;
             if (audio == null || audio.Length == 0) { RejectCapture("No audio. Hold the trigger while someone speaks."); return; }
@@ -75,10 +81,10 @@ namespace FP2.Captions
                 if (string.IsNullOrWhiteSpace(translation)) { SetState(CaptionState.Error, "No translation returned. Please try again."); return; }
                 ProcessingSeconds = clock.Elapsed.TotalSeconds;
                 TranslationSeconds = ProcessingSeconds - TranscriptionSeconds;
-                Caption = translation;
-                CaptionRevision++;
-                CaptionIsPrevious = false;
-                SetState(CaptionState.Ready, "Translation ready");
+                DraftTranscript = transcript;
+                DraftCaption = translation;
+                if (requireReview) SetState(CaptionState.Reviewing, "Check source and translation. A: accept / LEFT trigger: discard.");
+                else Publish(false);
             }
             catch (OperationCanceledException)
             {
@@ -100,6 +106,21 @@ namespace FP2.Captions
             }
         }
 
+        public bool AcceptDraft()
+        {
+            if (disposed || State != CaptionState.Reviewing) return false;
+            Publish(true); return true;
+        }
+
+        private void Publish(bool reviewed)
+        {
+            Transcript = DraftTranscript; Caption = DraftCaption;
+            DraftTranscript = DraftCaption = "";
+            TurnId = Guid.NewGuid().ToString("N"); WasReviewed = reviewed;
+            CaptionRevision++; CaptionIsPrevious = false;
+            SetState(CaptionState.Ready, "Translation ready");
+        }
+
         public void RejectCapture(string reason)
         {
             if (disposed) return;
@@ -111,6 +132,7 @@ namespace FP2.Captions
 
         public void Cancel()
         {
+            DraftTranscript = DraftCaption = "";
             generation++;
             active?.Cancel();
             active = null;

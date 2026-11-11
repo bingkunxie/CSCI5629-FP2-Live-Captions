@@ -12,6 +12,7 @@ public sealed class MandarinCaptionGateway : ICaptionGateway, IVoiceSynthesis
 {
     private readonly string endpoint;
     private readonly string key;
+    public int VoicePreset { get; set; }
     public TranslationDirection Direction { get; }
     public const string TranscriptionModel = "gemini-3.5-transcribe-preview";
     public const string TranslationModel = "gpt-6-luna";
@@ -42,7 +43,7 @@ public sealed class MandarinCaptionGateway : ICaptionGateway, IVoiceSynthesis
     {
         var body = new JObject {
             ["model"] = "azure-tts", ["input"] = text,
-            ["voice"] = language == "zh" ? "zh-CN-XiaoxiaoNeural" : "alloy",
+            ["voice"] = VoicePresets.Id(language, VoicePreset),
             ["response_format"] = "wav"
         };
         using var request = JsonRequest("/v1/audio/speech", body);

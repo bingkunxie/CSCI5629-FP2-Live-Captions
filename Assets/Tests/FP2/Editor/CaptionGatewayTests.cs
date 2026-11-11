@@ -164,6 +164,31 @@ public class CaptionGatewayTests
         await serve;
     }
 
+
+    [TestCase("en", 1, "en-GB-SoniaNeural")]
+    [TestCase("en", 2, "en-AU-NatashaNeural")]
+    [TestCase("zh", 1, "zh-TW-HsiaoChenNeural")]
+    public async Task SelectedAccentReachesTheActualSpeechRequest(string language, int preset, string expected)
+    {
+        using var listener = Listen(out string endpoint);
+        string body = null;
+        var serve = Task.Run(async () => {
+            var context = await listener.GetContextAsync();
+            using (var reader = new StreamReader(context.Request.InputStream)) body = await reader.ReadToEndAsync();
+            byte[] wav = new byte[48]; Encoding.ASCII.GetBytes("RIFF").CopyTo(wav, 0);
+            context.Response.StatusCode = 200; context.Response.ContentLength64 = wav.Length;
+            await context.Response.OutputStream.WriteAsync(wav,0,wav.Length); context.Response.Close();
+        });
+        var instance = Gateway(endpoint);
+        instance.GetType().GetProperty("VoicePreset").SetValue(instance,preset);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        await ((IVoiceSynthesis)instance).SynthesizeAsync("Exact accepted words",language,timeout.Token);
+        await serve;
+        var request = JsonUtility.FromJson<SpeechRequest>(body);
+        Assert.That(request.voice, Is.EqualTo(expected));
+        Assert.That(request.input, Is.EqualTo("Exact accepted words"));
+    }
+
     [Test]
     public async Task UnauthorizedGatewayResponseBecomesSafeAccessError()
     {

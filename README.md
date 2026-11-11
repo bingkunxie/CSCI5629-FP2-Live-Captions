@@ -14,9 +14,15 @@ Use the existing course key via `UMN_GATEWAY_KEY_FILE` in the Editor. No credent
 
 The prior APK had an Android startup ANR. Its loader was blocked in ZIP decompression during first-scene loading, and the APK contained a roughly 100 MB compiled compute shader from the unused A4 inference package. A clean build now excludes that package and its cached data. The app has started successfully on Quest and displayed a live English translation using direct UMN HTTPS. The observed capture-end-to-caption-frame delay was 3.04 seconds for one utterance.
 
-Validation: independent project imports and compiles; all 35 expanded-feature EditMode/integration tests passed (`Logs/FP2/features-reviewed-tests.xml`). The assignment projects remain unchanged. Device startup and one live speech-to-caption flow have been observed; see `docs/BUILD-STATUS.md` for the exact evidence and remaining checks.
+Previous baseline validation (before the conversation improvements below): the independent project imported and compiled; all 35 expanded-feature EditMode/integration tests passed (`Logs/FP2/features-reviewed-tests.xml`). The assignment projects remain unchanged. Device startup and one live speech-to-caption flow have been observed; see `docs/BUILD-STATUS.md` for the exact evidence and remaining checks.
 
 Standalone test: the user confirmed successful translation after disconnecting USB and launching the app fresh on eduroam. For the demo, unplug before launching. Changing USB while the app is running may require an app restart to recover microphone capture.
+
+## Conversation improvements
+
+**Progress checkpoint, November 11, 2026:** implemented in source; Android build and headset validation are pending. The standalone core regression run passed 39 tests; this is not a full Unity test run.
+
+Noise conditioning, transcript review, a persistent conversation notebook and selectable speech accents are implemented from the **right grip** tools menu. Review is on by default. Press A through the draft pages and again on the last page to accept, save and optionally speak the turn. See [controls and limits](docs/Conversation-Improvements.md).
 
 ## Open and run
 

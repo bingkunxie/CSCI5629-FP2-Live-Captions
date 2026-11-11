@@ -7,7 +7,7 @@ using TMPro;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
+public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
 {
     [SerializeField] private TMP_Text captionText;
     [SerializeField] private TMP_Text statusText;
@@ -60,6 +60,7 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
     {
         if (captionText == null || statusText == null || hintText == null || panel == null || languageLabel == null || modeText == null || voiceOutput == null)
         { Debug.LogError("[FP2] Caption scene references missing."); enabled = false; return; }
+        InitializeTools();
         ShowDirection();
         statusText.text = "Ready to configure";
         UpdateHint();
@@ -108,6 +109,7 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
     private void CreateCaptionSession()
     {
         gateway = new MandarinCaptionGateway(configuredEndpoint, configuredKey, direction);
+        ApplyVoicePreset();
         session = new CaptionSession(gateway, direction);
         session.Changed += RefreshView;
         lastShownRevision = 0;
@@ -116,6 +118,7 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
 
     public void ToggleVoice()
     {
+        if (HandleToolsInput("apply")) return;
         if (voice == null) ConfigureGateway();
         if (voice == null) return;
         voice.SetEnabled(!voice.Enabled);
@@ -126,15 +129,23 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
 
     public void ToggleDirection()
     {
+        if (HandleToolsInput("close")) return;
         CancelCurrentTurn();
         if (session != null) { session.Changed -= RefreshView; session.Dispose(); session = null; }
         direction = direction == TranslationDirection.MandarinToEnglish ? TranslationDirection.EnglishToMandarin : TranslationDirection.MandarinToEnglish;
         ShowDirection();
-        if (!string.IsNullOrEmpty(configuredKey)) CreateCaptionSession();
+        if (!string.IsNullOrEmpty(configuredKey))
+        {
+            bool enabledVoice = voice != null && voice.Enabled;
+            if (voice != null) { voice.Changed -= RefreshModes; voice.Dispose(); }
+            CreateCaptionSession();
+            voice = new TranslatedVoice(gateway, this);
+            voice.Changed += RefreshModes; voice.SetEnabled(enabledVoice);
+        }
         RefreshView();
     }
 
-    public void ToggleCameraGestures() => gestures?.ToggleCameraMode();
+    public void ToggleCameraGestures() { if (!toolsOpen && !historyOpen) gestures?.ToggleCameraMode(); }
 
     private void ShowDirection()
     {
@@ -149,7 +160,13 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
         if (modeText == null) return;
         string voiceMode = voice == null || !voice.Enabled ? "OFF" : voice.State == VoiceState.Preparing ? "preparing" :
             voice.State == VoiceState.Speaking ? "speaking" : voice.State == VoiceState.Error ? "unavailable; toggle to retry" : "ON";
-        modeText.text = "Voice: " + voiceMode + (gestures == null ? "" : "  |  " + gestures.Status);
+        modeText.text = "Voice: " + voiceMode + " / " + VoicePresets.Name(TargetLanguageCode, CurrentVoicePreset) +
+            "  |  Noise filter: " + (noiseReduction ? "ON" : "OFF") + "\n" +
+            "Review: " + (reviewEveryTurn ? "ON" : "auto") + "  |  Speaker " + speaker +
+            "  |  Notes: " + (notebookEnabled ? "ON" : "OFF") +
+            (notebook == null ? "" : " (" + notebook.Entries.Count + ")") + "\n" +
+            (gestures == null ? "" : gestures.Status) +
+            (string.IsNullOrEmpty(notebookMessage) ? "" : "  |  " + notebookMessage);
     }
 
     void IVoicePlayback.Play(byte[] wav)
@@ -176,7 +193,7 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
     public void BeginListening()
     {
         Debug.Log("[FP2] Trigger begin state=" + (session == null ? "Unconfigured" : session.State.ToString()));
-        if (!isActiveAndEnabled) return;
+        if (!isActiveAndEnabled || toolsOpen || historyOpen) return;
         if (session == null) ConfigureGateway();
         if (session == null) return;
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -193,6 +210,7 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
         microphone = Microphone.devices[0];
         try
         {
+            Microphone.End(microphone);
             recording = Microphone.Start(microphone, false, maxRecordingSeconds, sampleRate);
             if (recording == null) throw new InvalidOperationException();
             recordingStarted = Time.realtimeSinceStartup;
@@ -208,7 +226,9 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
         if (recording == null || session == null) return;
         captureEnded = Stopwatch.GetTimestamp();
         bool microphoneActive = Microphone.IsRecording(microphone);
-        int frames = microphoneActive ? Microphone.GetPosition(microphone) : recording.samples;
+        float heldSeconds = Time.realtimeSinceStartup - recordingStarted;
+        int frames = microphoneActive ? Microphone.GetPosition(microphone) :
+            heldSeconds >= maxRecordingSeconds - .1f ? recording.samples : 0;
         Debug.Log("[FP2] Trigger stop elapsed_s=" + (Time.realtimeSinceStartup - recordingStarted).ToString("F3") +
             " active=" + microphoneActive + " position_frames=" + frames + " frequency=" + recording.frequency);
         Microphone.End(microphone);
@@ -219,15 +239,18 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
             if (frames < captured.frequency / 4)
             { session.RejectCapture("Too short. Hold the trigger while someone speaks."); return; }
             float[] samples = new float[frames * captured.channels];
-            captured.GetData(samples, 0);
-            double energy = 0;
-            foreach (float sample in samples) energy += sample * sample;
-            double rms = Math.Sqrt(energy / Math.Max(samples.Length, 1));
-            Debug.Log("[FP2] Capture seconds=" + ((double)frames / captured.frequency).ToString("F2") + " rms=" + rms.ToString("F5"));
-            if (rms < 0.001)
-            { session.RejectCapture("Audio is too quiet. Move closer and try again."); return; }
-            byte[] wav = WavUtility.FromAudioClip(captured, frames);
-            _ = session.SubmitAsync(wav);
+            if (!captured.GetData(samples, 0)) throw new InvalidOperationException("Cannot read microphone samples.");
+            ConditionedAudio conditioned = AudioConditioner.Process(samples, captured.channels, captured.frequency, noiseReduction);
+            audioQuality = conditioned.Message;
+            if (conditioned.Reject) { session.RejectCapture(conditioned.Message); return; }
+            AudioClip cleaned = AudioClip.Create("Conditioned capture", conditioned.Samples.Length, 1, captured.frequency, false);
+            try
+            {
+                cleaned.SetData(conditioned.Samples, 0);
+                byte[] wav = WavUtility.FromAudioClip(cleaned, conditioned.Samples.Length);
+                _ = session.SubmitAsync(wav, reviewEveryTurn || conditioned.NeedsReview);
+            }
+            finally { Destroy(cleaned); }
         }
         catch (Exception) { session.RejectCapture("Could not process microphone audio. Please retry."); }
         finally { Destroy(captured); }
@@ -243,18 +266,27 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
         }
         voice?.Cancel();
         session?.Cancel();
+        if (!toolsOpen && !historyOpen && session != null)
+        {
+            captionText.text = session.Caption.Length > 0 ? session.Caption : "Ready for the next speaker.";
+            captionText.pageToDisplay = 1;
+        }
     }
 
     public void ToggleHeight()
     {
+        if (HandleToolsInput("previous")) return;
         upper = !upper;
         panel.localPosition = new Vector3(0, upper ? -0.25f : -0.50f, 1.5f);
     }
 
     public void NextPage()
     {
+        if (HandleToolsInput("next")) return;
         captionText.ForceMeshUpdate();
         int count = Math.Max(1, captionText.textInfo.pageCount);
+        if (session != null && session.State == CaptionState.Reviewing && page >= count)
+        { session.AcceptDraft(); return; }
         page = page % count + 1;
         captionText.pageToDisplay = page;
         UpdateHint();
@@ -263,19 +295,30 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
     private void RefreshView()
     {
         if (session == null) { RefreshModes(); return; }
+        if (!toolsOpen && !historyOpen && session.State != CaptionState.Reviewing)
+            captionText.text = session.Caption.Length > 0 ? session.Caption : "Ready for one speaker at a time.";
         statusText.text = session.Status + "  |  " + routeLabel;
         statusText.color = session.State == CaptionState.Error ? new Color(1f, .72f, .55f) : new Color(.65f, .93f, .83f);
         if (session.CaptionRevision > lastShownRevision)
         {
             captionText.text = session.Caption;
+            SaveAcceptedTurn();
             lastShownRevision = session.CaptionRevision;
             page = 1; captionText.pageToDisplay = 1;
             captionText.ForceMeshUpdate();
-            StartCoroutine(LogCaptionFrame(captureEnded, session.TranscriptionSeconds, session.TranslationSeconds));
+            if (!session.WasReviewed) StartCoroutine(LogCaptionFrame(captureEnded, session.TranscriptionSeconds, session.TranslationSeconds));
             if (voice != null) _ = voice.PresentAsync(session.Caption, TargetLanguageCode);
         }
+        if (session.State == CaptionState.Reviewing)
+        {
+            captionText.text = "Heard\n" + session.DraftTranscript + "\n\nTranslation\n" + session.DraftCaption;
+            page = 1; captionText.pageToDisplay = 1;
+            captionText.ForceMeshUpdate();
+            statusText.text = audioQuality + "  |  Check each speaker separately.";
+            StartCoroutine(LogCaptionFrame(captureEnded, session.TranscriptionSeconds, session.TranslationSeconds));
+        }
         // A previous caption stays visible but is explicitly identified during the next turn.
-        if (session.CaptionIsPrevious) statusText.text += "  |  Previous translation";
+        if (session.CaptionIsPrevious && session.State != CaptionState.Reviewing) statusText.text += "  |  Previous translation";
         UpdateHint();
         RefreshModes();
     }
@@ -291,14 +334,28 @@ public sealed class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
     private void UpdateHint()
     {
         int pages = captionText == null ? 1 : Math.Max(1, captionText.textInfo.pageCount);
+        if (toolsOpen || historyOpen) return;
+        if (session != null && session.State == CaptionState.Reviewing)
+        {
+            hintText.text = "A: next page / accept on last page   |   LEFT trigger: discard\n" +
+                "Hold RIGHT trigger to repeat with one speaker   |   RIGHT grip: tools";
+            return;
+        }
         hintText.text = "Hold RIGHT trigger: listen   |   Release: translate   |   LEFT trigger: cancel\n" +
-            "B: voice   |   Y: language   |   X: height   |   A: next page" + (pages > 1 ? " (" + page + "/" + pages + ")" : "") + "\nLEFT grip: camera gestures   |   Put controllers down for hand tracking";
+            "B: voice   |   Y: language   |   X: height   |   A: next page" + (pages > 1 ? " (" + page + "/" + pages + ")" : "") + "\nLEFT grip: camera gestures   |   RIGHT grip: tools / notebook";
     }
 
     private void OnApplicationPause(bool paused) { if (paused) CancelCurrentTurn(); }
-    private void OnDisable() { CancelCurrentTurn(); }
+    private void OnDisable() { CancelCurrentTurn(); toolsAction?.Disable(); AudioSettings.OnAudioConfigurationChanged -= AudioRouteChanged; }
+    private void OnEnable() { toolsAction?.Enable(); AudioSettings.OnAudioConfigurationChanged += AudioRouteChanged; }
+    private void AudioRouteChanged(bool deviceChanged)
+    {
+        CancelCurrentTurn();
+        if (statusText != null) statusText.text = "Audio device changed. Release the trigger, then try again.";
+    }
     private void OnDestroy()
     {
+        toolsAction?.Dispose();
         if (gestures != null) gestures.StatusChanged -= RefreshModes;
         if (voice != null) { voice.Changed -= RefreshModes; voice.Dispose(); voice = null; }
         if (session != null) { session.Changed -= RefreshView; session.Dispose(); session = null; }

@@ -1,5 +1,22 @@
 # Final project build status
 
+## Current source checkpoint — November 11, 2026
+
+This checkpoint adds audio conditioning and quality gates, review-before-publish, a private persistent conversation notebook with Markdown export, regional TTS voice selection and a right-grip tools menu. Existing bidirectional translation and gesture features are retained in source.
+
+Verification for this checkpoint:
+- 39 standalone core NUnit cases passed, 0 failed, covering existing caption/voice/gesture logic and the new audio, review and notebook logic.
+- Regional voice HTTP request tests were added but have not yet run in Unity.
+- Full Unity EditMode compilation/tests and Android APK build are pending. The initial Unity import failed in editor-shipped render-pipeline dependencies; missing files were traced to installer path length. Repair using a shorter D-drive installation alias is underway.
+- The new checkpoint has not been installed or verified on Quest 3. Earlier device results below apply to previous builds.
+- Course gateway voice checks timed out. Campus-network tests are deferred at the user's request. Regional voice availability and audible accents remain unverified.
+- Audio filtering is conservative high-pass/gap attenuation, not speaker separation. Review and manual speaker labels help manage mixed speech; overlapping-speaker recognition accuracy is not established.
+- Audio-route recovery logic was added, but physical USB hot-plug recovery remains unverified.
+
+This is a source progress checkpoint, not a validated APK release. See [new controls and limitations](Conversation-Improvements.md).
+
+## Earlier build history
+
 Date: November 10, 2026.
 
 The independent project passed 12 EditMode tests. The course transcription and translation endpoints passed a synthetic Mandarin test on eduroam: transcription 2.255 seconds and translation 1.505 seconds, with the time correction and library floor preserved. Those are computer-to-gateway results, not headset latency.
