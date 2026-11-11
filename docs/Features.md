@@ -8,7 +8,7 @@
 - **Y:** Mandarin → English / English → Mandarin. Switching cancels the current turn and clears its text.
 - X: lower/upper caption panel.
 - A: next page of a long caption.
-- **Left grip:** camera gesture mode on/off (off at launch).
+- **Left grip:** camera gesture mode on/off (off at launch). This is the side squeeze button under the left middle finger, not the front index-finger trigger.
 - Editor equivalents: Space, Escape, V, L, H, Right Arrow, G.
 
 Captions appear before voice is generated. English uses the course service's `alloy` voice; Mandarin uses `zh-CN-XiaoxiaoNeural`. Muting or starting a new recording stops playback and invalidates pending speech. Chinese text uses unmodified Noto Sans CJK SC Regular with its SIL OFL license.
@@ -27,6 +27,6 @@ The gold popup sits beside the caption panel. Oversized virtual hand meshes inhe
 
 35 automated tests passed, including the hand-visual reference checks. Android compilation and packaging also passed. Course API checks returned valid English and Mandarin WAV audio and a valid negative classification for a blank image. The main gesture logic and delayed-result regressions passed.
 
-Physical voice playback, Chinese readability, wearer pose accuracy, and other-speaker camera detection must be confirmed on the headset. Do not treat API or unit-test success as those device results.
+The user confirmed English translated speech, readable Chinese with spoken Mandarin, voice-off caption-only behavior, and the wearer thumbs-up popup on Quest. The user also confirmed the gold popup from the other-speaker camera test. These confirmations are functional smoke tests, not accuracy measurements.
 
 Known existing limitation: changing USB while the app runs can disrupt microphone capture. Disconnect before launch, or restart after changing USB.

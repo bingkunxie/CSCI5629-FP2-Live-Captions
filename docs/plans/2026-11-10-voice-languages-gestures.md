@@ -42,3 +42,7 @@ The user explicitly revoked the earlier 5 p.m. cutoff and instructed implementat
 - Android build succeeded; device playback, Chinese rendering, and both gesture paths still require headset checks.
 
 - Hardware screenshot exposed oversized inherited hand meshes. The fix preserves tracking/skeleton/provider components and uses `forceRenderingOff` only on hand-associated renderers and hand-template meshes. Scene setup and all 35 tests passed; updated APK installed. Visual and functional headset feedback is pending.
+
+- User verified on Quest: B enables/disables translated voice; Y switches to readable Chinese with spoken Mandarin; wearer thumbs-up shows the gold popup. Other-speaker camera test pending after clarifying the left side-grip control.
+
+- Final user confirmation: other-speaker camera thumbs-up also produces the gold popup after enabling camera mode. All requested feature paths have now passed headset smoke checks. Classification accuracy across varied scenes/people and longer-duration testing remain unmeasured.

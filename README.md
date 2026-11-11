@@ -14,7 +14,7 @@ Use the existing course key via `UMN_GATEWAY_KEY_FILE` in the Editor. No credent
 
 The prior APK had an Android startup ANR. Its loader was blocked in ZIP decompression during first-scene loading, and the APK contained a roughly 100 MB compiled compute shader from the unused A4 inference package. A clean build now excludes that package and its cached data. The app has started successfully on Quest and displayed a live English translation using direct UMN HTTPS. The observed capture-end-to-caption-frame delay was 3.04 seconds for one utterance.
 
-Validation: independent project imports and compiles; all 12 FP2 EditMode tests passed (`Logs/tests.xml`). The assignment projects remain unchanged. Device startup and one live speech-to-caption flow have been observed; see `docs/BUILD-STATUS.md` for the exact evidence and remaining checks.
+Validation: independent project imports and compiles; all 35 expanded-feature EditMode/integration tests passed (`Logs/FP2/features-reviewed-tests.xml`). The assignment projects remain unchanged. Device startup and one live speech-to-caption flow have been observed; see `docs/BUILD-STATUS.md` for the exact evidence and remaining checks.
 
 Standalone test: the user confirmed successful translation after disconnecting USB and launching the app fresh on eduroam. For the demo, unplug before launching. Changing USB while the app is running may require an app restart to recover microphone capture.
 
@@ -30,3 +30,5 @@ The gateway requires campus network access or the appropriate UMN VPN route. Cre
 ## Credits and dependencies
 
 This course prototype reuses the instructor-provided A3 HTTP/WAV helpers and uses Unity, Meta XR, TextMeshPro, and their dependencies. Existing third-party license and notice files are retained; their terms continue to apply. No additional project-wide license is asserted here.
+
+Expanded features: the user confirmed translated English speech, readable Chinese with Mandarin speech, voice-off behavior, the wearer thumbs-up popup, and the other-speaker camera popup. See [Features](docs/Features.md) for controls and limitations.
