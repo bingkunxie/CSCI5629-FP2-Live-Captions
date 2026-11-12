@@ -1,12 +1,12 @@
-"""USB development relay: Quest loopback -> adb reverse -> Mac loopback -> UMN HTTPS.
-Start while Cisco UMN VPN is connected. Never listens on the LAN or logs secrets.
+"""USB development relay: Quest loopback -> adb reverse -> laptop loopback -> UMN HTTPS.
+Start while the laptop can reach UMN through eduroam or UMN VPN. Never listens on the LAN or logs secrets.
 """
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import hmac, ssl, urllib.request, urllib.error, time, os
 KEY = Path(os.environ.get('UMN_GATEWAY_KEY_FILE', Path(__file__).resolve().parents[1] / '.secrets/umn-key.txt')).read_text().strip()
 if not KEY.startswith('sk-'): raise SystemExit('Local gateway key missing')
-TLS = ssl.create_default_context(cafile='/etc/ssl/cert.pem')
+TLS = ssl.create_default_context()
 ALLOWED = {'/v1/audio/transcriptions', '/v1/chat/completions', '/v1/audio/speech'}
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args): pass
@@ -30,10 +30,10 @@ class Handler(BaseHTTPRequestHandler):
             # Keep server response bodies (which can echo input) out of logs and the client.
             status=error.code; body=b'{"error":{"message":"UMN gateway request rejected; check model access, key and budget."}}'; content_type='application/json'
         except Exception:
-            status=502; body=b'{"error":{"message":"UMN gateway unreachable from Mac. Check Cisco VPN."}}';content_type='application/json'
+            status=502; body=b'{"error":{"message":"UMN gateway unreachable from laptop. Check campus Wi-Fi or UMN VPN."}}';content_type='application/json'
         print(f'{self.path} status={status} elapsed={time.monotonic()-start:.1f}s bytes={len(body)}',flush=True)
         try:
             self.send_response(status);self.send_header('Content-Type',content_type);self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
         except (BrokenPipeError,ConnectionResetError): pass
-print('A3 relay listening on 127.0.0.1:8765; keep Cisco VPN and USB connected.',flush=True)
+print('FP2 relay listening on 127.0.0.1:8765; keep laptop campus/VPN access and USB connected.',flush=True)
 ThreadingHTTPServer(('127.0.0.1',8765),Handler).serve_forever()

@@ -1,5 +1,18 @@
 # Final project build status
 
+## Campus voice checkpoint — November 12, 2026
+
+**AI speech playback passed the user-confirmed Quest test. Work paused after this feature at the user's request.**
+
+- All five implemented voice presets returned valid, non-silent 24 kHz mono PCM WAV from the real gateway: alloy, en-GB-SoniaNeural, en-AU-NatashaNeural, zh-CN-XiaoxiaoNeural and zh-TW-HsiaoChenNeural.
+- Headset direct access failed while it was connected to UofM-Guest. The laptop's gateway requests succeeded. Configured the existing USB loopback route and fixed the relay's macOS-only certificate-file path by using Python's default verified TLS context.
+- Through the relay, actual headset transcription, translation and speech requests returned HTTP 200. The user confirmed audible English playback and normal behavior.
+- One observed turn reached the caption in 3.02 seconds (transcription 1.20 s, translation 1.79 s); this is not a benchmark average.
+- Voice availability was checked for all presets; individual subjective accent comparison inside the headset remains unverified.
+- The running setup requires USB, the local relay and laptop campus/VPN access. The APK is unchanged at 0.3.0; the fix is in the laptop Python relay.
+- No noisy-speech, overlapping-speaker, two-real-headset or camera-classifier acceptance was performed in this checkpoint.
+- Evidence: [voice validation metadata](voice-validation-2026-11-12.json). No course credentials, user speech or notebook contents are included.
+
 ## Offline meeting tools — November 12, 2026
 
 - Implemented four offline reactions, a collapsible translucent controller menu, native local thumbs-up shortcut, 2.5-second popup, and persistent shared six-point agenda with manual completion.

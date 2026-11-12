@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-12",
+  "feature": "AI speech playback and voice preset availability",
+  "gateway": "UMN",
+  "computer_voice_presets": [
+    {
+      "preset": "au",
+      "seconds": 2.55,
+      "sampleRate": 24000,
+      "channels": 1,
+      "rms": 0.0835,
+      "sha256": "7c99379a3ded91973dd891ec8c32c06a2dbb2155d8230da43ede557905163d09"
+    },
+    {
+      "preset": "cn",
+      "seconds": 1.9,
+      "sampleRate": 24000,
+      "channels": 1,
+      "rms": 0.0916,
+      "sha256": "4e30c3399d5921cf3b5a22d6abae95691f569d3129914dfa1251bbf002499087"
+    },
+    {
+      "preset": "tw",
+      "seconds": 2.25,
+      "sampleRate": 24000,
+      "channels": 1,
+      "rms": 0.099,
+      "sha256": "edad8301086555887ae39c392664843b8b383c5ec6420df7fae6a58c81cd01c1"
+    },
+    {
+      "preset": "uk",
+      "seconds": 2.05,
+      "sampleRate": 24000,
+      "channels": 1,
+      "rms": 0.1458,
+      "sha256": "7f23d7f85a75609cee3d085a3fef81e5d6a87ae372bcda0b151712dc2e146a7b"
+    },
+    {
+      "preset": "us",
+      "seconds": 2.413,
+      "sampleRate": 24000,
+      "channels": 1,
+      "rms": 0.0741,
+      "sha256": "5b600eaf16ca9dda9097e85eb123cc5c997af14322cd9f62125983e518a048ff"
+    }
+  ],
+  "device": {
+    "model": "Quest 3",
+    "appVersion": "0.3.0",
+    "route": "USB / laptop relay",
+    "wifiObserved": "UofM-Guest",
+    "userConfirmedPlayback": true,
+    "observedCaptureToCaptionSeconds": 3.02,
+    "observedTranscriptionSeconds": 1.2,
+    "observedTranslationSeconds": 1.79
+  },
+  "limits": [
+    "A single observed utterance is not a latency benchmark.",
+    "Each preset returned valid non-silent audio; individual in-headset subjective accent comparison was not completed.",
+    "Direct access from the headset guest network failed; successful hardware test used the USB laptop relay.",
+    "Other campus-dependent feature acceptance is not included in this checkpoint."
+  ]
+}
