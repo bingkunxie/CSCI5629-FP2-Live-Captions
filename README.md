@@ -20,9 +20,13 @@ Standalone test: the user confirmed successful translation after disconnecting U
 
 ## Conversation improvements
 
-**Progress checkpoint, November 11, 2026:** implemented in source; Android build and headset validation are pending. The standalone core regression run passed 39 tests; this is not a full Unity test run.
+**Progress, November 11, 2026:** the full Unity EditMode run passed 54 tests, and 12 Python relay tests passed. See [build and device verification](docs/BUILD-STATUS.md) for APK and hardware status.
 
 Noise conditioning, transcript review, a persistent conversation notebook and selectable speech accents are implemented from the **right grip** tools menu. Review is on by default. Press A through the draft pages and again on the last page to accept, save and optionally speak the turn. See [controls and limits](docs/Conversation-Improvements.md).
+
+## Two-headset turn-taking
+
+Optional LAN pairing gives each Quest a fixed A/B identity. While A records, B displays a waiting message in **B's selected source language** and cannot start a competing recording. A local Python relay arbitrates simultaneous requests, tracks disconnects and forwards confirmed results. This coordination works without campus gateway access; speech processing still needs the gateway. See [pair setup, controls and offline checks](docs/Two-Quest-Session.md).
 
 ## Open and run
 

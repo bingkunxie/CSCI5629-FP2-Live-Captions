@@ -61,6 +61,7 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
         if (captionText == null || statusText == null || hintText == null || panel == null || languageLabel == null || modeText == null || voiceOutput == null)
         { Debug.LogError("[FP2] Caption scene references missing."); enabled = false; return; }
         InitializeTools();
+        InitializePair();
         ShowDirection();
         statusText.text = "Ready to configure";
         UpdateHint();
@@ -119,6 +120,7 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
     public void ToggleVoice()
     {
         if (HandleToolsInput("apply")) return;
+        if (pairRequired && (!pairOnline || !string.IsNullOrEmpty(pairOwner))) return;
         if (voice == null) ConfigureGateway();
         if (voice == null) return;
         voice.SetEnabled(!voice.Enabled);
@@ -185,6 +187,7 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
 
     private void Update()
     {
+        PairTick();
         if (voice != null && voice.State == VoiceState.Speaking && !voiceOutput.isPlaying) voice.PlaybackEnded();
         if (recording != null && Time.realtimeSinceStartup - recordingStarted >= maxRecordingSeconds) StopListening();
     }
@@ -205,6 +208,7 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
         }
 #endif
         if (Microphone.devices.Length == 0) { statusText.text = "No microphone available."; return; }
+        if (RequestPairTurn()) return;
         if (!session.BeginCapture()) return;
         voice?.Cancel();
         microphone = Microphone.devices[0];
@@ -223,6 +227,7 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
     [ContextMenu("Stop Listening")]
     public void StopListening()
     {
+        StopPairTrigger();
         if (recording == null || session == null) return;
         captureEnded = Stopwatch.GetTimestamp();
         bool microphoneActive = Microphone.IsRecording(microphone);
@@ -258,6 +263,7 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
 
     public void CancelCurrentTurn()
     {
+        ReleasePairTurn();
         Debug.Log("[FP2] Cancel state=" + (session == null ? "Unconfigured" : session.State.ToString()) + " recording=" + (recording != null));
         if (recording != null)
         {
@@ -303,6 +309,7 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
         {
             captionText.text = session.Caption;
             SaveAcceptedTurn();
+            PublishPairResult();
             lastShownRevision = session.CaptionRevision;
             page = 1; captionText.pageToDisplay = 1;
             captionText.ForceMeshUpdate();
@@ -355,6 +362,7 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
     }
     private void OnDestroy()
     {
+        pair?.Dispose();
         toolsAction?.Dispose();
         if (gestures != null) gestures.StatusChanged -= RefreshModes;
         if (voice != null) { voice.Changed -= RefreshModes; voice.Dispose(); voice = null; }

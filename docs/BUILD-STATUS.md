@@ -1,6 +1,14 @@
 # Final project build status
 
-## Current source checkpoint — November 11, 2026
+## Two-Quest implementation verification — November 11, 2026
+
+- Implemented LAN turn arbitration, fixed device roles, source-language wait messages, peer result display and disconnect/timeout recovery. Added an optional USB pairing route for isolated Wi-Fi.
+- Full Unity 6000.6.0f1 EditMode run: **54 passed, 0 failed**. This includes the prior caption/audio/notebook/voice tests, gateway request construction and new controller-level wait-language/capture-blocking tests.
+- Python relay tests: **12 passed**, including two real TCP clients, competing requests, Unicode result delivery, role rejection, disconnect and lease expiry.
+- Android build and hardware check are in progress. These results do not establish two-physical-headset behavior or real gateway accent availability.
+- Course gateway tests remain deferred at the user's request.
+
+## Earlier source checkpoint — November 11, 2026
 
 This checkpoint adds audio conditioning and quality gates, review-before-publish, a private persistent conversation notebook with Markdown export, regional TTS voice selection and a right-grip tools menu. Existing bidirectional translation and gesture features are retained in source.
 

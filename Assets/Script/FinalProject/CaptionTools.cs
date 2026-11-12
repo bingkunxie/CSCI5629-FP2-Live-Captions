@@ -28,6 +28,8 @@ public sealed partial class QuestLiveCaptions
         toolsAction.AddBinding("<Keyboard>/f1");
         toolsAction.performed += _ => ToggleTools();
         toolsAction.Enable();
+        // Status now includes localized Mandarin peer messages; reuse the dynamic CJK font.
+        statusText.font = captionText.font;
         panel.sizeDelta = new Vector2(1000, 600);
         captionText.rectTransform.sizeDelta = new Vector2(944, 220);
         statusText.rectTransform.anchoredPosition = new Vector2(0, -294);
@@ -81,7 +83,7 @@ public sealed partial class QuestLiveCaptions
             "Noise reduction  " + (noiseReduction ? "ON" : "OFF"),
             "Review every turn  " + (reviewEveryTurn ? "ON" : "OFF"),
             "Voice accent  " + VoicePresets.Name(TargetLanguageCode, CurrentVoicePreset),
-            "Active speaker  " + speaker + " (manual label)",
+            "Active speaker  " + speaker + (pairRequired ? " (paired device)" : " (manual label)"),
             "Save confirmed turns  " + (notebookEnabled ? "ON" : "OFF"),
             "Read notebook  (" + (notebook?.Entries.Count ?? 0) + " turns)",
             "Export notebook",
@@ -110,7 +112,9 @@ public sealed partial class QuestLiveCaptions
                 if (TargetLanguageCode == "zh") mandarinVoice = (mandarinVoice + 1) % VoicePresets.Count("zh");
                 else englishVoice = (englishVoice + 1) % VoicePresets.Count("en");
                 ApplyVoicePreset(); break;
-            case 3: speaker = speaker == "A" ? "B" : "A"; break;
+            case 3:
+                if (!pairRequired) speaker = speaker == "A" ? "B" : "A";
+                break;
             case 4:
                 if (notebook != null) notebookEnabled = !notebookEnabled;
                 break;
