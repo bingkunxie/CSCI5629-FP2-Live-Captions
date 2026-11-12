@@ -46,14 +46,14 @@ public sealed partial class QuestLiveCaptions
     }
     private void SendReaction(string kind)
     {
-        if(!reactionGate.TrySend(kind,MeetingNow)){meetingUI.SetStatus(PairChinese?"请稍等再发送表情。":"Wait a moment before another reaction.");return;}
+        if(!reactionGate.TrySend(kind,MeetingNow)){meetingUI.SetStatus("Wait a moment before another reaction.");return;}
         string id=Guid.NewGuid().ToString("N");
         if(pairRequired)
         {
-            if(!pairOnline||!pairReady){meetingUI.SetStatus(PairChinese?"同伴尚未连接，表情未发送。":"Partner disconnected; reaction not sent.");return;}
+            if(!pairOnline||!pairReady){meetingUI.SetStatus("Partner disconnected; reaction not sent.");return;}
             pair.Send(new PairPacket{type="reaction",eventId=id,reaction=kind});
         }
-        else meetingUI.ShowReaction(PairChinese?"你":"You",kind,true);
+        else meetingUI.ShowReaction("You",kind,true);
     }
     private void SaveMeetingDraft(string[] lines,int version)
     {
@@ -65,16 +65,16 @@ public sealed partial class QuestLiveCaptions
                 if(!pairOnline){meetingUI.SetStatus("Reconnect to save the shared agenda.");return;}
                 pendingAgendaSave=Guid.NewGuid().ToString("N");
                 pair.Send(new PairPacket{type="agenda_replace",agendaVersion=version,items=candidate.items,eventId=pendingAgendaSave});
-                meetingUI.SetStatus(PairChinese?"正在同步纲要…":"Saving shared agenda…");
+                meetingUI.SetStatus("Saving shared agenda…");
             }
             else
             {
                 if(agendaStore==null)throw new IOException();
                 agendaStore.Save(candidate);meetingAgenda=candidate;meetingUI.SetAgenda(candidate);meetingUI.CloseEditor();
-                meetingUI.SetStatus(PairChinese?"纲要已保存在本机。":"Agenda saved on this headset.");
+                meetingUI.SetStatus("Agenda saved on this headset.");
             }
         }
-        catch(ArgumentException){meetingUI.SetStatus(PairChinese?"最多 6 项，每项最多 60 字符。":"Use up to 6 items, each at most 60 characters.");}
+        catch(ArgumentException){meetingUI.SetStatus("Use up to 6 items, each at most 60 characters.");}
         catch(Exception){meetingUI.SetStatus("Could not save agenda; existing agenda retained.");}
     }
     private void SetAgendaDone(string id,bool done)
@@ -91,7 +91,7 @@ public sealed partial class QuestLiveCaptions
                 if(agendaStore==null)throw new IOException();
                 var next=MeetingAgenda.SetDone(meetingAgenda,id,done);
                 agendaStore.Save(next);meetingAgenda=next;meetingUI.SetAgenda(next);
-                meetingUI.SetStatus(PairChinese?"完成状态已保存。":"Completion saved.");
+                meetingUI.SetStatus("Completion saved.");
             }
         }
         catch(Exception){meetingUI.SetStatus("Could not update agenda; previous state retained.");}
@@ -103,7 +103,7 @@ public sealed partial class QuestLiveCaptions
         {
             if(reactionGate.Accept(packet.eventId,packet.reaction,packet.receivedAt,MeetingNow))
             {
-                meetingUI.ShowReaction(packet.owner==pairConfig.role?(PairChinese?"你":"You"):packet.owner,packet.reaction);
+                meetingUI.ShowReaction(packet.owner==pairConfig.role?("You"):packet.owner,packet.reaction);
                 Debug.Log("[FP2 Meeting] Reaction shown: "+packet.reaction);
             }
             return true;
@@ -116,7 +116,7 @@ public sealed partial class QuestLiveCaptions
                 MeetingAgenda.Validate(next);meetingAgenda=next;meetingUI.SetAgenda(next);
                 try {agendaStore?.Save(next);}catch(Exception){meetingUI.SetStatus("Agenda synchronized; local backup unavailable.");}
                 if(!string.IsNullOrEmpty(pendingAgendaSave)&&packet.eventId==pendingAgendaSave)
-                {pendingAgendaSave="";meetingUI.CloseEditor();meetingUI.SetStatus(PairChinese?"共享纲要已保存。":"Shared agenda saved.");}
+                {pendingAgendaSave="";meetingUI.CloseEditor();meetingUI.SetStatus("Shared agenda saved.");}
                 Debug.Log("[FP2 Meeting] Agenda synchronized: "+next.items.Length+" items, revision "+next.agendaVersion);
             }
             catch(Exception){meetingUI.SetStatus("Invalid shared agenda ignored.");}

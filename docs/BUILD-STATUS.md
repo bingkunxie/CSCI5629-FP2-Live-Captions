@@ -1,5 +1,16 @@
 # Final project build status
 
+## Source-language UI — November 12, 2026
+
+- Added a shared 154-entry UI catalog. Mandarin source selects Simplified Chinese UI; English source selects English UI, independent of the translation target.
+- Localized main labels, hints, capture/gateway errors, voice names, tools/notebook controls, meeting agenda editor and reaction notices. Existing notices/toasts refresh on source change; participant content and drafts remain unchanged.
+- All relevant main-panel text uses the bundled CJK font. Repository AGENTS.md records the rule for subsequent development.
+- Full Unity EditMode suite: **70 passed, 0 failed**. New integration tests cover both source directions, tools/notebook/hints, capture errors, gesture statuses, existing notices, draft preservation and popup lifetime.
+- Android **0.3.1 / versionCode 4** built, passed decompressed credential/private-data and obsolete-shader checks, and installed on Quest 3. The app reached Ready on the existing working USB laptop relay.
+- APK: 116,406,296 bytes; SHA-256: 490ccb1bc42b52058eca507d285e83c9a4b6bebf7f2ebace373933db224bbfd1.
+- Quest system dialogs/keyboards follow OS settings; participant input and translated captions are intentionally not UI-translated.
+- [Language behavior and development rule](UI-Language.md).
+
 ## Campus voice checkpoint — November 12, 2026
 
 **AI speech playback passed the user-confirmed Quest test. Work paused after this feature at the user's request.**

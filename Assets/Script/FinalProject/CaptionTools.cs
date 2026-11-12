@@ -30,6 +30,7 @@ public sealed partial class QuestLiveCaptions
         toolsAction.Enable();
         // Status now includes localized Mandarin peer messages; reuse the dynamic CJK font.
         statusText.font = captionText.font;
+        hintText.font = modeText.font = languageLabel.font = captionText.font;
         panel.sizeDelta = new Vector2(1000, 600);
         captionText.rectTransform.sizeDelta = new Vector2(944, 220);
         statusText.rectTransform.anchoredPosition = new Vector2(0, -294);
@@ -50,7 +51,7 @@ public sealed partial class QuestLiveCaptions
         bool open = !toolsOpen && !historyOpen;
         CancelCurrentTurn(); toolsOpen = open; historyOpen = false; clearArmed = false;
         if (open) DrawTools();
-        else { captionText.text = session?.Caption ?? "Ready"; captionText.pageToDisplay = 1; RefreshView(); }
+        else { captionText.text = session?.Caption ?? L("Ready"); captionText.pageToDisplay = 1; RefreshView(); }
     }
 
     // Existing mapped buttons become menu navigation only while the tools view is visible.
@@ -80,24 +81,24 @@ public sealed partial class QuestLiveCaptions
     private void DrawTools()
     {
         string[] rows = {
-            "Noise reduction  " + (noiseReduction ? "ON" : "OFF"),
-            "Review every turn  " + (reviewEveryTurn ? "ON" : "OFF"),
-            "Voice accent  " + VoicePresets.Name(TargetLanguageCode, CurrentVoicePreset),
-            "Active speaker  " + speaker + (pairRequired ? " (paired device)" : " (manual label)"),
-            "Save confirmed turns  " + (notebookEnabled ? "ON" : "OFF"),
-            "Read notebook  (" + (notebook?.Entries.Count ?? 0) + " turns)",
-            "Export notebook",
-            clearArmed ? "Press B again to clear saved turns" : "Clear notebook",
-            "Close tools"
+            L("Noise reduction  ") + (noiseReduction ? L("ON") : L("OFF")),
+            L("Review every turn  ") + (reviewEveryTurn ? L("ON") : L("OFF")),
+            L("Voice accent  ") + L(VoicePresets.Name(TargetLanguageCode, CurrentVoicePreset)),
+            L("Active speaker  ") + speaker + (pairRequired ? L(" (paired device)") : L(" (manual label)")),
+            L("Save confirmed turns  ") + (notebookEnabled ? L("ON") : L("OFF")),
+            L("Read notebook  (") + (notebook?.Entries.Count ?? 0) + L(" turns)"),
+            L("Export notebook"),
+            clearArmed ? L("Press B again to clear saved turns") : L("Clear notebook"),
+            L("Close tools")
         };
         // Show three options at a time to preserve readable text size in the headset.
-        var text = new StringBuilder("TOOLS\n");
+        var text = new StringBuilder(L("TOOLS\n"));
         int first = toolsIndex / 3 * 3;
         for (int i = first; i < Math.Min(first + 3, rows.Length); i++)
             text.Append(i == toolsIndex ? "> " : "  ").Append(rows[i]).Append('\n');
         captionText.text = text.ToString(); captionText.pageToDisplay = 1;
-        statusText.text = "Tools " + (toolsIndex + 1) + "/9. One speaker per recording.";
-        hintText.text = "X: previous option   |   A: next option   |   B: select\nY or RIGHT grip: close tools";
+        statusText.text = L("Tools ") + (toolsIndex + 1) + L("/9. One speaker per recording.");
+        hintText.text = L("X: previous option   |   A: next option   |   B: select\nY or RIGHT grip: close tools");
         RefreshModes();
     }
 
@@ -150,16 +151,16 @@ public sealed partial class QuestLiveCaptions
 
     private void DrawHistory()
     {
-        if (notebook == null || notebook.Entries.Count == 0) captionText.text = "Your notebook is empty.";
+        if (notebook == null || notebook.Entries.Count == 0) captionText.text = L("Your notebook is empty.");
         else
         {
             var e = notebook.Entries[historyIndex];
-            captionText.text = "Speaker " + e.Speaker + "  " + e.UtcTime.Substring(0, 16) + "\n" + e.Source + "\n\n" + e.Translation;
+            captionText.text = L("Speaker ") + e.Speaker + "  " + e.UtcTime.Substring(0, 16) + "\n" + e.Source + "\n\n" + e.Translation;
         }
         captionText.pageToDisplay = 1;
-        statusText.text = "Notebook " + (notebook == null || notebook.Entries.Count == 0 ? 0 : historyIndex + 1) +
-            "/" + (notebook?.Entries.Count ?? 0) + "   |   " + notebookMessage;
-        hintText.text = "X: previous turn   |   A: next page / turn   |   B: export\nY or RIGHT grip: return to captions";
+        statusText.text = L("Notebook ") + (notebook == null || notebook.Entries.Count == 0 ? 0 : historyIndex + 1) +
+            "/" + (notebook?.Entries.Count ?? 0) + "   |   " + L(notebookMessage);
+        hintText.text = L("X: previous turn   |   A: next page / turn   |   B: export\nY or RIGHT grip: return to captions");
     }
 
     private void ExportNotebook()

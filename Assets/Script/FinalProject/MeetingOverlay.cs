@@ -10,7 +10,7 @@ using UnityEngine.XR;
 
 public sealed class MeetingOverlay : MonoBehaviour
 {
-    private sealed class Choice { public RectTransform rect; public Image image; public TMP_Text label; public Action click; }
+    private sealed class Choice { public RectTransform rect; public Image image; public TMP_Text label; public string labelKey; public Action click; }
     private readonly List<Choice> choices=new List<Choice>();
     private readonly List<Choice> rows=new List<Choice>();
     private RectTransform anchor, palette, editor, toast;
@@ -25,6 +25,9 @@ public sealed class MeetingOverlay : MonoBehaviour
     private readonly List<string> draft=new List<string>();
     private int draftIndex, draftVersion;
     private bool chinese, shift;
+    private string statusKey="", toastRole="", toastKind="like";
+    private bool toastPreview;
+    private string L(string text)=>UiText.Get(text,chinese);
     private double toastUntil;
     private TouchScreenKeyboard keyboard;
     private InputAction reactionMenuAction, agendaEditAction;
@@ -104,18 +107,19 @@ public sealed class MeetingOverlay : MonoBehaviour
     private Choice Button(Transform parent,string name,string label,Vector2 position,Vector2 size,Action callback)
     {
         var r=Panel(name,parent,position,size,new Color(.13f,.27f,.30f,.90f));
-        var c=new Choice{rect=r,image=r.GetComponent<Image>(),click=callback,
-            label=Text(r,name+" label",label,new Vector2(0,-3),size-new Vector2(16,6),22)};
+        var c=new Choice{rect=r,image=r.GetComponent<Image>(),click=callback,labelKey=label,
+            label=Text(r,name+" label",L(label),new Vector2(0,-3),size-new Vector2(16,6),22)};
         choices.Add(c);return c;
     }
-    public void SetLanguage(bool value){chinese=value;RefreshLanguage();DrawAgenda();}
+    public void SetLanguage(bool value){chinese=value;RefreshLanguage();DrawAgenda();if(editor!=null&&editor.gameObject.activeSelf)DrawDraft();if(message!=null&&statusKey.Length>0)message.text=L(statusKey);if(toast!=null&&toast.gameObject.activeSelf)DrawToast();}
     private void RefreshLanguage()
     {
         if(title==null)return;
         title.text=chinese?"会议纲要":"MEETING AGENDA";
-        if(gestureButton!=null)gestureButton.label.text=(chinese?"点赞手势快捷发送：":"Thumbs-up shortcut: ")+(GestureShortcut?"ON":"OFF");
+        if(gestureButton!=null)gestureButton.label.text=(chinese?"点赞手势快捷发送：":"Thumbs-up shortcut: ")+L(GestureShortcut?"ON":"OFF");
         foreach(var c in choices)
         {
+            if(!string.IsNullOrEmpty(c.labelKey)&&c!=gestureButton)c.label.text=L(c.labelKey);
             if(c.rect.name=="Edit agenda")c.label.text=chinese?"编辑纲要":"Edit agenda";
             if(c.rect.name=="Reactions")c.label.text=chinese?"表情":"Reactions";
             if(c.rect.name=="Reactions toggle")c.label.text=chinese?"表情 +":"Reactions +";
@@ -123,10 +127,10 @@ public sealed class MeetingOverlay : MonoBehaviour
         }
     }
     private string ReactionName(string kind) => chinese ?
-        kind=="like"?"点赞":kind=="clap"?"鼓掌":kind=="love"?"赞同":"疑问" :
+        kind=="like"?"点赞":kind=="clap"?"鼓掌":kind=="love"?"爱心":"疑问" :
         kind=="like"?"Like":kind=="clap"?"Applause":kind=="love"?"Love":"Question";
     public void SetAgenda(AgendaSnapshot value){MeetingAgenda.Validate(value);agenda=value;DrawAgenda();}
-    public void SetStatus(string value){if(message!=null)message.text=value;}
+    public void SetStatus(string value){statusKey=UiText.Get(value,false);if(message!=null)message.text=L(statusKey);}
     private void DrawAgenda()
     {
         for(int i=0;i<rows.Count;i++)
@@ -154,9 +158,10 @@ public sealed class MeetingOverlay : MonoBehaviour
     }
     public void ShowReaction(string role,string kind,bool preview=false)
     {
-        toastIcon.SetKind(kind);toastText.text=role+"\n"+ReactionName(kind)+(preview?(chinese?"\n本机预览":"\nLocal preview"):"");
+        toastRole=UiText.Get(role,false);toastKind=kind;toastPreview=preview;toastIcon.SetKind(kind);DrawToast();
         toastUntil=Now+ReactionGate.Lifetime;toastGroup.alpha=1;toast.gameObject.SetActive(true);
     }
+    private void DrawToast(){toastText.text=L(toastRole)+"\n"+ReactionName(toastKind)+(toastPreview?"\n"+L("Local preview"):"");}
     private void BuildEditor()
     {
         editor=Panel("Agenda editor",anchor,Vector2.zero,new Vector2(1000,590),new Color(.025f,.08f,.10f,.98f));
@@ -173,13 +178,13 @@ public sealed class MeetingOverlay : MonoBehaviour
                 Button(editor,"Key "+key,key.ToUpperInvariant(),new Vector2((col-(keys[row].Length-1)/2f)*75,-207-row*60),
                     new Vector2(68,51),()=>Append(shift?key.ToUpperInvariant():key));
             }
-        Button(editor,"Shift","Shift",new Vector2(-350,-452),new Vector2(150,47),()=>{shift=!shift;SetStatus(shift?"ABC":"abc");});
+        Button(editor,"Shift","Shift",new Vector2(-350,-452),new Vector2(150,47),()=>{shift=!shift;SetStatus(shift?"Uppercase":"Lowercase");});
         Button(editor,"Space","Space",new Vector2(-130,-452),new Vector2(250,47),()=>Append(" "));
         Button(editor,"Backspace","Backspace",new Vector2(115,-452),new Vector2(200,47),Backspace);
-        Button(editor,"System keyboard","Keyboard / 中文",new Vector2(350,-452),new Vector2(240,47),OpenSystemKeyboard);
-        Button(editor,"Save agenda","Save / 保存",new Vector2(-180,-520),new Vector2(280,50),
+        Button(editor,"System keyboard","System keyboard",new Vector2(350,-452),new Vector2(240,47),OpenSystemKeyboard);
+        Button(editor,"Save agenda","Save",new Vector2(-180,-520),new Vector2(280,50),
             ()=>AgendaSaved?.Invoke(draft.ToArray(),draftVersion));
-        Button(editor,"Cancel edit","Cancel / 取消",new Vector2(180,-520),new Vector2(280,50),CloseEditor);
+        Button(editor,"Cancel edit","Cancel",new Vector2(180,-520),new Vector2(280,50),CloseEditor);
         editor.gameObject.SetActive(false);
     }
     public void OpenEditor()
@@ -193,7 +198,7 @@ public sealed class MeetingOverlay : MonoBehaviour
     private void DrawDraft()
     {
         draftText.text=(chinese?"编辑要点 ":"Edit item ")+(draft.Count==0?0:draftIndex+1)+"/"+draft.Count+
-            "   (max 6 items / 60 characters)\n"+(draft.Count==0?"":draft[draftIndex])+"|";
+            L("   (max 6 items / 60 characters)\n")+(draft.Count==0?"":draft[draftIndex])+"|";
     }
     private void Append(string value)
     {
@@ -214,7 +219,7 @@ public sealed class MeetingOverlay : MonoBehaviour
     {
         if(draft.Count==0){draft.Add("");draftIndex=0;}
         if(TouchScreenKeyboard.isSupported)
-            keyboard=TouchScreenKeyboard.Open(draft[draftIndex],TouchScreenKeyboardType.Default,false,false,false,false,"Agenda item",60);
+            keyboard=TouchScreenKeyboard.Open(draft[draftIndex],TouchScreenKeyboardType.Default,false,false,false,false,L("Agenda item"),60);
         else SetStatus(chinese?"可用屏幕按键或电脑离线页面输入。":"Use the VR keys or the offline laptop editor.");
     }
     private bool GetRay(out Ray ray)

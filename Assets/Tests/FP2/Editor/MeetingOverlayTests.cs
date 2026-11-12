@@ -68,4 +68,51 @@ public class MeetingOverlayTests
         Assert.That(id,Is.EqualTo(agenda.items[1].id));Assert.That(done,Is.True);
         Assert.That(agenda.items[0].done,Is.False);
     }
+
+    private string Label(string objectName)
+    {
+        var choiceList=(System.Collections.IEnumerable)type.GetField("choices",Hidden).GetValue(ui);
+        foreach(var choice in choiceList)
+        {
+            var rect=(RectTransform)choice.GetType().GetField("rect").GetValue(choice);
+            if(rect.name!=objectName)continue;
+            var label=choice.GetType().GetField("label").GetValue(choice);
+            return (string)label.GetType().GetProperty("text").GetValue(label);
+        }
+        throw new Exception("Missing button "+objectName);
+    }
+    private string TextField(string name)
+    {
+        var label=type.GetField(name,Hidden).GetValue(ui);
+        return (string)label.GetType().GetProperty("text").GetValue(label);
+    }
+    [Test] public void SourceLanguageSwitchRefreshesEveryEditorButtonWithoutChangingDraft()
+    {
+        var data=MeetingAgenda.Replace(MeetingAgenda.Empty(),new[]{"Keep my English text","保留中文内容"});
+        Call("SetAgenda",data);Call("OpenEditor");Call("SetLanguage",true);
+        Assert.That(Label("Save agenda"),Is.EqualTo("保存"));
+        Assert.That(Label("Cancel edit"),Is.EqualTo("取消"));
+        Assert.That(Label("System keyboard"),Is.EqualTo("系统键盘"));
+        Assert.That(Label("Previous item"),Is.EqualTo("上一项"));
+        Assert.That(TextField("draftText"),Does.Contain("最多 6 项").And.Contain("Keep my English text"));
+        Call("SetLanguage",false);
+        Assert.That(Label("Save agenda"),Is.EqualTo("Save"));
+        Assert.That(Label("System keyboard"),Is.EqualTo("System keyboard"));
+        Assert.That(TextField("draftText"),Does.Contain("max 6 items").And.Contain("Keep my English text"));
+        var draft=(System.Collections.Generic.List<string>)type.GetField("draft",Hidden).GetValue(ui);
+        Assert.That(draft,Is.EqualTo(new[]{"Keep my English text","保留中文内容"}));
+    }
+    [Test] public void ExistingNoticeAndToastChangeLanguageWithoutExtendingPopupLifetime()
+    {
+        Call("SetStatus","Reconnect to save the shared agenda.");
+        Call("ShowReaction","You","like",true);
+        var expiry=type.GetField("toastUntil",Hidden).GetValue(ui);
+        Call("SetLanguage",true);
+        Assert.That(TextField("message"),Is.EqualTo("请重新连接后保存共享纲要。"));
+        Assert.That(TextField("toastText"),Is.EqualTo("你\n点赞\n本机预览"));
+        Call("SetLanguage",false);
+        Assert.That(TextField("message"),Is.EqualTo("Reconnect to save the shared agenda."));
+        Assert.That(TextField("toastText"),Is.EqualTo("You\nLike\nLocal preview"));
+        Assert.That(type.GetField("toastUntil",Hidden).GetValue(ui),Is.EqualTo(expiry));
+    }
 }

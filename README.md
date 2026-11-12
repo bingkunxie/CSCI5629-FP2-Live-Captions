@@ -1,4 +1,4 @@
-**Latest: v0.3.0 meeting tools** — offline Emoji reactions and a persistent shared meeting agenda. Installed on Quest 3; 65 Unity and 20 Python tests passed. [中文操作说明](docs/Meeting-Tools.zh-CN.md) · [Release APK](https://github.com/bingkunxie/CSCI5629-FP2-Live-Captions/releases/tag/v0.3.0-meeting-tools-preview).
+**Latest: v0.3.1 source-language UI** — Mandarin source uses Chinese UI; English source uses English UI. Installed on Quest 3; 70 Unity tests passed. [UI language guide](docs/UI-Language.md) · [Release APK](https://github.com/bingkunxie/CSCI5629-FP2-Live-Captions/releases/tag/v0.3.1-source-language-ui).
 
 Independent Unity project for Quest 3 Mandarin–English captions, optional translated speech, and thumbs-up effects.
 
@@ -48,3 +48,7 @@ Expanded features: the user confirmed translated English speech, readable Chines
 ## Offline Emoji and meeting agenda
 
 Implemented: a collapsible translucent controller menu with Like/Applause/Love/Question, native tracked-hand thumbs-up shortcut, 2.5-second remote popup, and a persistent six-point meeting agenda with shared manual completion. Both features work without campus services; two-headset sharing needs the local relay. Use right thumbstick for reactions and left thumbstick for agenda editing. See [controls, laptop Chinese editor and persistence](docs/Meeting-Tools.md).
+
+## Interface language
+
+The headset UI follows the selected **source language**: Mandarin → Chinese UI; English → English UI. Press Y outside menus to switch. This includes status/error messages, tools, notebook, agenda and reactions; participant content and translated captions keep their own language. See [UI language behavior and development rule](docs/UI-Language.md).
