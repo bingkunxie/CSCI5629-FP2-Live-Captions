@@ -20,7 +20,7 @@ Standalone test: the user confirmed successful translation after disconnecting U
 
 ## Conversation improvements
 
-**Progress, November 11, 2026:** the full Unity EditMode run passed 56 tests, and 12 Python relay tests passed. See [build and device verification](docs/BUILD-STATUS.md) for APK and hardware status.
+**Progress, November 11, 2026:** the full Unity EditMode run passed 56 tests, and 12 Python relay tests passed. A development APK is available from [GitHub Releases](https://github.com/bingkunxie/CSCI5629-FP2-Live-Captions/releases). It installed and launched on Quest 3; the user confirmed the panel displays normally. Two-physical-headset and campus gateway checks remain pending. See [build and device verification](docs/BUILD-STATUS.md).
 
 Noise conditioning, transcript review, a persistent conversation notebook and selectable speech accents are implemented from the **right grip** tools menu. Review is on by default. Press A through the draft pages and again on the last page to accept, save and optionally speak the turn. See [controls and limits](docs/Conversation-Improvements.md).
 
