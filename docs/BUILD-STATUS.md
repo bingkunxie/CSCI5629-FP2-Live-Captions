@@ -1,5 +1,18 @@
 # Final project build status
 
+## Offline meeting tools — November 12, 2026
+
+- Implemented four offline reactions, a collapsible translucent controller menu, native local thumbs-up shortcut, 2.5-second popup, and persistent shared six-point agenda with manual completion.
+- Full Unity EditMode suite: **65 passed, 0 failed**, including actual overlay trigger consumption, draft conflict preservation, popup expiry and checkbox identity. Python: **20 passed** (7 meeting-feature tests and 13 relay tests), including real TCP clients and local HTTP editor.
+- Android development APK **0.3.0 / versionCode 3** built successfully and installed on Quest 3; 116,397,352 bytes.
+- SHA-256: 9a06f65a2c8dd675287c554c3878123b94f487962db733a381c0d8593589754f.
+- Decompressed APK scan found neither saved course credentials nor pairing token/private app files. Obsolete A4 shader check passed.
+- Actual Quest B connected over USB reverse to a simulated peer A without campus services. Runtime evidence confirmed all **four reaction displays** and **three agenda snapshots**, including an item completion update. The temporary probe restored prior private files byte-for-byte. The headset was then deliberately returned to standalone mode for immediate offline use with one available Quest; the prior pairing configuration remains backed up privately.
+- The user confirmed the new agenda panel and Reactions button are visible in the headset. Physical controller selection, native thumbs-up usability and two-real-headset wireless acceptance remain separate from these automated/device-receive checks.
+- Local browser rendering verified Chinese/English agenda text and checked-item strike-through.
+- Campus speech/translation/TTS testing remains deferred. Sharing uses the local relay; standalone mode provides local agenda editing/checking and explicitly labeled reaction preview.
+- [English controls](Meeting-Tools.md) · [中文操作说明](Meeting-Tools.zh-CN.md)
+
 ## Two-Quest implementation verification — November 11, 2026
 
 - Implemented LAN turn arbitration, fixed device roles, source-language wait messages, peer result display and disconnect/timeout recovery. Added an optional USB pairing route for isolated Wi-Fi.

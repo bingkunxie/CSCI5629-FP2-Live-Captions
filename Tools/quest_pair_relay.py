@@ -6,18 +6,20 @@ import json
 import secrets
 import time
 from pathlib import Path
+from meeting_features import MeetingFeatures
 
 MAX_LINE = 65536
 LEASE_SECONDS = 6
 TURN_SECONDS = 90
 
 class Room:
-    def __init__(self, clock=time.monotonic):
+    def __init__(self, clock=time.monotonic, agenda_path=None):
         self.clock = clock
         self.clients = {}
         self.owner = self.turn = self.phase = ""
         self.started = 0
         self.revision = 0
+        self.meeting = MeetingFeatures(agenda_path, clock)
 
     def join(self, role, client):
         if role not in ("A", "B") or role in self.clients:
@@ -54,6 +56,9 @@ class Room:
         self.clients[role] = (client, self.clock())
         op = message.get("type")
         turn = message.get("turn", "")
+        if op in ("reaction", "agenda_get", "agenda_replace", "agenda_set"):
+            result = self.meeting.handle(role, message, len(self.clients) == 2)
+            return dict(result, eventId=message.get("eventId", "")) if result and result["type"] == "agenda" else result
         if op == "acquire":
             if not isinstance(turn, str) or not 1 <= len(turn) <= 64:
                 return dict(type="error", message="Invalid turn")
@@ -83,9 +88,9 @@ class Room:
         return None
 
 class Relay:
-    def __init__(self, token):
+    def __init__(self, token, agenda_path=None):
         self.token = token
-        self.room = Room()
+        self.room = Room(agenda_path=agenda_path)
         self.writers = {}
 
     def send(self, writer, message):
@@ -115,6 +120,7 @@ class Relay:
             role = candidate
             self.writers[writer] = role
             self.broadcast(self.room.state())
+            self.send(writer, self.room.meeting.agenda)
             while True:
                 raw = await asyncio.wait_for(reader.readline(), LEASE_SECONDS + 1)
                 if not raw:
@@ -124,10 +130,12 @@ class Relay:
                     break
                 response = self.room.handle(role, writer, message)
                 if response:
-                    if response["type"] == "result":
+                    if response["type"] in ("result", "reaction", "agenda"):
                         self.broadcast(response)
                     else:
                         self.send(writer, response)
+                        if response["type"] == "notice" and message.get("type", "").startswith("agenda"):
+                            self.send(writer, self.room.meeting.agenda)
                     if response["type"] == "error":
                         break
                 self.broadcast(self.room.state())
@@ -140,6 +148,45 @@ class Relay:
                 self.room.leave(role, writer)
             writer.close()
             self.broadcast(self.room.state())
+
+    async def editor(self, reader, writer):
+        # Loopback-only browser editor. Custom header + Host checking prevent cross-site writes.
+        try:
+            raw = await asyncio.wait_for(reader.readuntil(b"\r\n\r\n"), 5)
+            lines = raw.decode("ascii").split("\r\n")
+            method, path, _ = lines[0].split()
+            headers = dict(line.split(":", 1) for line in lines[1:] if ":" in line)
+            headers = {k.lower(): v.strip() for k, v in headers.items()}
+            if headers.get("host") not in ("127.0.0.1:" + str(self.editor_port), "localhost:" + str(self.editor_port)):
+                raise ValueError("Invalid host")
+            if method == "GET" and path == "/":
+                body = Path(__file__).with_name("meeting_editor.html").read_bytes()
+                mime = "text/html; charset=utf-8"
+            elif method == "GET" and path == "/agenda":
+                body = json.dumps(self.room.meeting.agenda, ensure_ascii=False).encode()
+                mime = "application/json"
+            elif method == "POST" and path == "/agenda" and headers.get("x-fp2-editor") == "1":
+                length = int(headers.get("content-length", "0"))
+                if not 0 < length <= 16384:
+                    raise ValueError("Invalid size")
+                message = json.loads(await asyncio.wait_for(reader.readexactly(length), 5))
+                if message.get("type") not in ("agenda_replace", "agenda_set"):
+                    raise ValueError("Invalid operation")
+                result = self.room.meeting.handle("host", message)
+                if result["type"] == "agenda":
+                    self.broadcast(result)
+                body = json.dumps(result, ensure_ascii=False).encode()
+                mime = "application/json"
+            else:
+                raise ValueError("Invalid request")
+            writer.write(("HTTP/1.1 200 OK\r\nContent-Type: " + mime +
+                          "\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nContent-Length: " +
+                          str(len(body)) + "\r\nConnection: close\r\n\r\n").encode() + body)
+            await writer.drain()
+        except (ValueError, KeyError, TypeError, AttributeError, OSError, asyncio.IncompleteReadError, asyncio.LimitOverrunError, asyncio.TimeoutError):
+            writer.write(b"HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+        finally:
+            writer.close()
 
     async def tick(self):
         while True:
@@ -164,12 +211,15 @@ async def run(args):
     for role in ("A", "B"):
         (args.config_dir / ("pair-" + role + ".json")).write_text(json.dumps(
             dict(host=args.host, port=args.port, role=role, token=token)), encoding="utf-8")
-    relay = Relay(token)
+    relay = Relay(token, args.config_dir / "meeting-agenda.json")
+    relay.editor_port = args.editor_port
     server = await asyncio.start_server(relay.connection, args.bind, args.port, limit=MAX_LINE)
     print(f"Quest pair relay listening on {args.bind}:{args.port}. Device configs in {args.config_dir}", flush=True)
+    editor = await asyncio.start_server(relay.editor, "127.0.0.1", args.editor_port, limit=16384)
+    print(f"Offline agenda editor: http://127.0.0.1:{args.editor_port}", flush=True)
     tick = asyncio.create_task(relay.tick())
     try:
-        async with server:
+        async with server, editor:
             await server.serve_forever()
     finally:
         tick.cancel()
@@ -179,6 +229,7 @@ if __name__ == "__main__":
     parser.add_argument("--host", required=True, help="Laptop LAN IPv4 address reachable by both headsets")
     parser.add_argument("--bind", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8766)
+    parser.add_argument("--editor-port", type=int, default=8767)
     parser.add_argument("--config-dir", required=True, type=Path, help="Private directory outside repository")
     try:
         asyncio.run(run(parser.parse_args()))

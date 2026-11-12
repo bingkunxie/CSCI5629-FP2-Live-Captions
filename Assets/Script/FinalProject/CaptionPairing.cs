@@ -76,9 +76,11 @@ public sealed partial class QuestLiveCaptions
         {
             while (pair.Received.TryDequeue(out PairPacket packet))
             {
+                if (HandleMeetingPacket(packet)) continue;
                 if (packet.type == "disconnected" || packet.type == "error")
                 {
                     pairOnline = pairReady = false;
+                    pendingAgendaSave = "";
                     CancelCurrentTurn();
                     pairOwner = "";
                 }

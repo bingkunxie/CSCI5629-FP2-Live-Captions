@@ -1,3 +1,5 @@
+Implementation update, November 12, 2026: the offline menu, four reactions, native thumbs-up shortcut and 2.5-second paired popup are now implemented. See [current controls](Meeting-Tools.md). The text below records the earlier design discussion; its future-tense statements are historical.
+
 # Proposed shared emoji reactions
 
 Status: design proposal, not implemented in this build.

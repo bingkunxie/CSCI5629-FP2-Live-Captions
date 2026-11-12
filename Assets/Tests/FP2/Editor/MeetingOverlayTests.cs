@@ -1,0 +1,71 @@
+using System;
+using System.Reflection;
+using FP2.Captions;
+using NUnit.Framework;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+
+public class MeetingOverlayTests
+{
+    private const BindingFlags Hidden=BindingFlags.Instance|BindingFlags.NonPublic;
+    private Type type;
+    private Component ui;
+    private UnityEngine.Object host;
+    [SetUp] public void SetUp()
+    {
+        EditorSceneManager.OpenScene("Assets/Scenes/FP2LiveCaptions.unity");
+        var hostType=Type.GetType("QuestLiveCaptions, Assembly-CSharp",true);
+        host=UnityEngine.Object.FindFirstObjectByType(hostType);
+        var panel=(RectTransform)hostType.GetField("panel",Hidden).GetValue(host);
+        var caption=hostType.GetField("captionText",Hidden).GetValue(host);
+        var font=caption.GetType().GetProperty("font").GetValue(caption);
+        type=Type.GetType("MeetingOverlay, Assembly-CSharp",true);
+        ui=panel.gameObject.AddComponent(type);
+        Call("Configure",panel,font,null);
+        hostType.GetField("meetingUI",Hidden).SetValue(host,ui);
+    }
+    private object Call(string name,params object[] args)=>type.GetMethod(name,BindingFlags.Public|Hidden).Invoke(ui,args);
+    private RectTransform Rect(string name)=>(RectTransform)type.GetField(name,Hidden).GetValue(ui);
+    [TearDown] public void TearDown()
+    {
+        if(ui!=null)UnityEngine.Object.DestroyImmediate(ui);
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+    }
+    [Test] public void AgendaEditorConsumesRecordingTriggerWithoutGatewayOrMicrophone()
+    {
+        Call("OpenEditor");
+        host.GetType().GetMethod("BeginListening").Invoke(host,null);
+        Assert.That(host.GetType().GetField("session",Hidden).GetValue(host),Is.Null);
+        Assert.That(host.GetType().GetField("recording",Hidden).GetValue(host),Is.Null);
+        Assert.That(type.GetProperty("ModalOpen").GetValue(ui),Is.True);
+    }
+    [Test] public void PaletteCollapsesAndPopupExpiresWithoutChangingCaption()
+    {
+        Call("TogglePalette");Assert.That(Rect("palette").gameObject.activeSelf,Is.True);
+        Call("TogglePalette");Assert.That(Rect("palette").gameObject.activeSelf,Is.False);
+        Call("ShowReaction","A","like",false);Assert.That(Rect("toast").gameObject.activeSelf,Is.True);
+        type.GetField("toastUntil",Hidden).SetValue(ui,0d);Call("Update");
+        Assert.That(Rect("toast").gameObject.activeSelf,Is.False);
+        Assert.That(host.GetType().GetField("session",Hidden).GetValue(host),Is.Null);
+    }
+    [Test] public void RemoteUpdateDoesNotSilentlyOverwriteAnOpenDraft()
+    {
+        var original=MeetingAgenda.Replace(MeetingAgenda.Empty(),new[]{"First point","第二项"});
+        Call("SetAgenda",original);Call("OpenEditor");
+        Call("SetAgenda",MeetingAgenda.Replace(original,new[]{"Remote replacement"}));
+        Assert.That(type.GetField("draftVersion",Hidden).GetValue(ui),Is.EqualTo(original.agendaVersion));
+        var draft=(System.Collections.Generic.List<string>)type.GetField("draft",Hidden).GetValue(ui);
+        Assert.That(draft,Is.EqualTo(new[]{"First point","第二项"}));
+    }
+    [Test] public void CheckboxEmitsItemIdentityAndExplicitCompletion()
+    {
+        var agenda=MeetingAgenda.Replace(MeetingAgenda.Empty(),new[]{"Budget","Schedule"});
+        Call("SetAgenda",agenda);
+        string id=null;bool done=false;
+        Action<string,bool> handler=(key,value)=>{id=key;done=value;};
+        type.GetEvent("AgendaToggled").AddEventHandler(ui,handler);
+        Call("SelectRow",1);
+        Assert.That(id,Is.EqualTo(agenda.items[1].id));Assert.That(done,Is.True);
+        Assert.That(agenda.items[0].done,Is.False);
+    }
+}

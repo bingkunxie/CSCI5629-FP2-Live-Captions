@@ -62,6 +62,7 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
         { Debug.LogError("[FP2] Caption scene references missing."); enabled = false; return; }
         InitializeTools();
         InitializePair();
+        InitializeMeeting();
         ShowDirection();
         statusText.text = "Ready to configure";
         UpdateHint();
@@ -151,6 +152,7 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
 
     private void ShowDirection()
     {
+        meetingUI?.SetLanguage(PairChinese);
         languageLabel.text = direction == TranslationDirection.MandarinToEnglish ? "MANDARIN TO ENGLISH" : "ENGLISH TO MANDARIN";
         captionText.text = direction == TranslationDirection.MandarinToEnglish ? "English translations will appear here." : "中文翻译将显示在这里。";
         captionText.ForceMeshUpdate();
@@ -196,7 +198,9 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
     public void BeginListening()
     {
         Debug.Log("[FP2] Trigger begin state=" + (session == null ? "Unconfigured" : session.State.ToString()));
-        if (!isActiveAndEnabled || toolsOpen || historyOpen) return;
+        if (!isActiveAndEnabled) return;
+        if (meetingUI != null && meetingUI.TryConsumeTrigger()) return;
+        if (toolsOpen || historyOpen) return;
         if (session == null) ConfigureGateway();
         if (session == null) return;
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -353,8 +357,8 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
     }
 
     private void OnApplicationPause(bool paused) { if (paused) CancelCurrentTurn(); }
-    private void OnDisable() { CancelCurrentTurn(); toolsAction?.Disable(); AudioSettings.OnAudioConfigurationChanged -= AudioRouteChanged; }
-    private void OnEnable() { toolsAction?.Enable(); AudioSettings.OnAudioConfigurationChanged += AudioRouteChanged; }
+    private void OnDisable() { if (meetingUI != null) meetingUI.enabled=false; CancelCurrentTurn(); toolsAction?.Disable(); AudioSettings.OnAudioConfigurationChanged -= AudioRouteChanged; }
+    private void OnEnable() { if (meetingUI != null) meetingUI.enabled=true; toolsAction?.Enable(); AudioSettings.OnAudioConfigurationChanged += AudioRouteChanged; }
     private void AudioRouteChanged(bool deviceChanged)
     {
         CancelCurrentTurn();
@@ -362,6 +366,7 @@ public sealed partial class QuestLiveCaptions : MonoBehaviour, IVoicePlayback
     }
     private void OnDestroy()
     {
+        if (gestures != null) gestures.NativeThumbsUp -= SendThumbReaction;
         pair?.Dispose();
         toolsAction?.Dispose();
         if (gestures != null) gestures.StatusChanged -= RefreshModes;

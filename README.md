@@ -1,3 +1,5 @@
+**Latest: v0.3.0 meeting tools** — offline Emoji reactions and a persistent shared meeting agenda. Installed on Quest 3; 65 Unity and 20 Python tests passed. [中文操作说明](docs/Meeting-Tools.zh-CN.md) · [Release APK](https://github.com/bingkunxie/CSCI5629-FP2-Live-Captions/releases/tag/v0.3.0-meeting-tools-preview).
+
 Independent Unity project for Quest 3 Mandarin–English captions, optional translated speech, and thumbs-up effects.
 
 - Unity: 6000.6.0f1, Universal Render Pipeline, Meta XR / OpenXR.
@@ -42,3 +44,7 @@ The gateway requires campus network access or the appropriate UMN VPN route. Cre
 This course prototype reuses the instructor-provided A3 HTTP/WAV helpers and uses Unity, Meta XR, TextMeshPro, and their dependencies. Existing third-party license and notice files are retained; their terms continue to apply. No additional project-wide license is asserted here.
 
 Expanded features: the user confirmed translated English speech, readable Chinese with Mandarin speech, voice-off behavior, the wearer thumbs-up popup, and the other-speaker camera popup. See [Features](docs/Features.md) for controls and limitations.
+
+## Offline Emoji and meeting agenda
+
+Implemented: a collapsible translucent controller menu with Like/Applause/Love/Question, native tracked-hand thumbs-up shortcut, 2.5-second remote popup, and a persistent six-point meeting agenda with shared manual completion. Both features work without campus services; two-headset sharing needs the local relay. Use right thumbstick for reactions and left thumbstick for agenda editing. See [controls, laptop Chinese editor and persistence](docs/Meeting-Tools.md).

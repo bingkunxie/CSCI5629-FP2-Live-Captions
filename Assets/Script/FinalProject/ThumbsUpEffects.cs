@@ -42,6 +42,7 @@ public sealed class ThumbsUpEffects : MonoBehaviour
     public string Status { get; private set; } = "Hands: waiting for tracking | Camera off";
     public Func<bool> CanSample { get; set; }
     public event Action StatusChanged;
+    public event Action NativeThumbsUp;
 
     public void Configure(Func<byte[], CancellationToken, Task<bool>> classifier)
     {
@@ -112,8 +113,8 @@ public sealed class ThumbsUpEffects : MonoBehaviour
         double now = Time.unscaledTimeAsDouble;
         bool? left = ReadPose(leftHand, leftShape, leftOrientation);
         bool? right = ReadPose(rightHand, rightShape, rightOrientation);
-        if (gate.Observe(ThumbsUpSource.LeftHand, left, now)) Pop(now);
-        if (gate.Observe(ThumbsUpSource.RightHand, right, now)) Pop(now);
+        if (gate.Observe(ThumbsUpSource.LeftHand, left, now)) { if (NativeThumbsUp != null) NativeThumbsUp.Invoke(); else Pop(now); }
+        if (gate.Observe(ThumbsUpSource.RightHand, right, now)) { if (NativeThumbsUp != null) NativeThumbsUp.Invoke(); else Pop(now); }
         string tracking = left.HasValue || right.HasValue ? "Hands: tracked" : "Hands: waiting for tracking";
         if (tracking != handsStatus) { handsStatus = tracking; PublishStatus(); }
         AnimatePop(now);

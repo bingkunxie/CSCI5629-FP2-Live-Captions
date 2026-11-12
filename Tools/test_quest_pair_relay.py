@@ -108,6 +108,35 @@ class NetworkTests(unittest.IsolatedAsyncioTestCase):
         result=await self.receive(other,"result")
         self.assertEqual(result["source"],"你好")
         await self.receive(other,"state",lambda m:not m["owner"])
+
+    async def test_meeting_features_forward_and_rejoin_without_replaying_reaction(self):
+        ar,aw=await self.connect("A")
+        br,bw=await self.connect("B")
+        await self.receive(ar,"state",lambda m:m["paired"])
+        initial=await self.receive(br,"agenda")
+        aw.write((json.dumps(dict(type="agenda_replace",agendaVersion=initial["agendaVersion"],
+            items=[dict(text="检查原型"),dict(text="Next steps")],eventId="save-one"))+"\n").encode())
+        await aw.drain()
+        a=await self.receive(ar,"agenda",lambda m:len(m["items"])==2)
+        b=await self.receive(br,"agenda",lambda m:len(m["items"])==2)
+        self.assertEqual(a,b)
+        self.assertEqual(b["eventId"],"save-one")
+        bw.write((json.dumps(dict(type="agenda_set",itemId=b["items"][0]["id"],done=True))+"\n").encode())
+        await bw.drain()
+        checked=await self.receive(ar,"agenda",lambda m:m["items"][0]["done"])
+        await self.receive(br,"agenda",lambda m:m["items"][0]["done"])
+        aw.write(b'{"type":"reaction","reaction":"like","eventId":"emoji-one"}\n')
+        await aw.drain()
+        self.assertEqual((await self.receive(br,"reaction"))["owner"],"A")
+        bw.close();await bw.wait_closed()
+        await self.receive(ar,"state",lambda m:not m["paired"])
+        cr,_=await self.connect("B")
+        snapshot=await self.receive(cr,"agenda")
+        self.assertEqual(snapshot["items"],checked["items"])
+        self.assertNotIn("reaction",snapshot)
+        with self.assertRaises(asyncio.TimeoutError):
+            await asyncio.wait_for(self.receive(cr,"reaction"),.1)
+
     async def test_wrong_token_and_duplicate_role_rejected(self):
         r,_=await self.connect("A","incorrect")
         self.assertEqual((await self.receive(r,"error"))["message"],"Invalid room token")

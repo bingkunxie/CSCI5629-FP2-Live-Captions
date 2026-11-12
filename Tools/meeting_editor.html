@@ -1,0 +1,41 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>会议纲要 · FP2</title><style>
+body{font:17px system-ui,sans-serif;background:#f4f5ef;color:#193c37;max-width:780px;margin:48px auto;padding:20px}
+textarea{box-sizing:border-box;width:100%;height:210px;font:inherit;padding:16px;border:1px solid #aac0b6;border-radius:12px}
+button{padding:12px 20px;background:#285d50;color:white;border:0;border-radius:8px;font:inherit;cursor:pointer;margin:12px 8px 12px 0}
+label{display:flex;gap:14px;padding:15px;background:white;border-bottom:1px solid #ddd;overflow-wrap:anywhere}
+input{width:22px;height:22px}p{line-height:1.6}.done{text-decoration:line-through;color:#777}#status{min-height:30px}
+</style><h1>会议纲要 / Meeting agenda</h1>
+<p>会前每行输入一个要点，最多 6 项，每项 60 字符。保存后会同步到已连接的 Quest；会议中可在任一端勾选完成。无需校园网或 AI 服务。</p>
+<textarea id="draft" aria-label="会议要点" placeholder="确认会议目标&#10;讨论当前进度&#10;确定下一步行动"></textarea>
+<button id="save">保存并同步 / Save</button><button id="reload">重新载入 / Reload</button><button id="export">导出给单机头显 / Export</button>
+<p id="status" role="status"></p><section id="list"></section>
+<script>
+let current=null,editVersion=0,dirty=false; const $=id=>document.getElementById(id);
+$('draft').oninput=()=>dirty=true;
+function show(data,replaceDraft=false){
+ current=data;$('list').replaceChildren();
+ for(const item of data.items){
+  const label=document.createElement('label'),check=document.createElement('input'),text=document.createElement('span');
+  check.type='checkbox';check.checked=item.done;text.textContent=item.text;text.className=item.done?'done':'';
+  check.onchange=()=>send({type:'agenda_set',itemId:item.id,done:check.checked});
+  label.append(check,text);$('list').append(label);
+ }
+ if(replaceDraft||!dirty){$('draft').value=data.items.map(x=>x.text).join('\n');editVersion=data.agendaVersion;dirty=false}
+}
+async function send(data){
+ try{const response=await fetch('/agenda',{method:'POST',headers:{'Content-Type':'application/json','X-FP2-Editor':'1'},body:JSON.stringify(data)});
+ if(!response.ok)throw Error('Request failed');const result=await response.json();
+ if(result.type==='notice'){$('status').textContent=result.message;return}
+ const replaced=data.type==='agenda_replace';if(replaced)dirty=false;show(result,replaced);$('status').textContent='已保存 / Saved';
+ }catch(e){$('status').textContent='无法连接本机服务 / Local server unavailable'}
+}
+$('save').onclick=()=>send({type:'agenda_replace',agendaVersion:editVersion,items:$('draft').value.split(/\r?\n/).map(text=>({text:text.trim()})).filter(x=>x.text)});
+$('reload').onclick=async()=>{show(await(await fetch('/agenda')).json(),true);$('status').textContent='已重新载入'};
+$('export').onclick=()=>{
+ if(!current)return;const url=URL.createObjectURL(new Blob([JSON.stringify(current,null,2)],{type:'application/json'}));
+ const a=document.createElement('a');a.href=url;a.download='meeting-agenda-import.json';a.click();URL.revokeObjectURL(url)
+};
+async function poll(){try{show(await(await fetch('/agenda')).json())}catch(e){$('status').textContent='请启动本机会议服务 / Start the local relay'}}
+poll();setInterval(poll,1500);
+</script></html>

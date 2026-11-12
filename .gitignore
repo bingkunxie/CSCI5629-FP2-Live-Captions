@@ -62,3 +62,9 @@ pair-A.json
 pair-B.json
 room-token.txt
 /.vsconfig
+
+# Private meeting contents
+meeting-agenda.json
+meeting-agenda-import.json
+meeting-agenda-import.json.applied
+meeting-agenda.dat*

@@ -14,6 +14,11 @@ using UnityEngine;
     public string type, token, role, owner, turn, phase, source, translation, sourceLanguage, message;
     public bool granted, paired;
     public int revision;
+    public string eventId, reaction, itemId, meetingId;
+    public int agendaVersion;
+    public bool done;
+    public FP2.Captions.AgendaItem[] items;
+    [NonSerialized] public double receivedAt;
 }
 public sealed class QuestPairTransport : IDisposable
 {
@@ -38,6 +43,8 @@ public sealed class QuestPairTransport : IDisposable
                 socket = client;
                 if (!client.ConnectAsync(config.host, config.port).Wait(3000)) throw new IOException();
                 client.NoDelay = true;
+                // A new connection starts a new epoch; never replay stale user actions.
+                while (outbound.TryDequeue(out _)) { }
                 using var stream = client.GetStream();
                 stream.ReadTimeout = 2000; stream.WriteTimeout = 2000;
                 using var writer = new StreamWriter(stream, new UTF8Encoding(false), 1024, true) { AutoFlush = true };
@@ -66,7 +73,12 @@ public sealed class QuestPairTransport : IDisposable
                             {
                                 var packet = JsonUtility.FromJson<PairPacket>(line.ToString());
                                 line.Clear(); lastMessage = DateTime.UtcNow;
-                                if (packet != null) Received.Enqueue(packet);
+                                if (packet != null)
+                                {
+                                    packet.receivedAt = System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency;
+                                    Received.Enqueue(packet);
+                                    while (Received.Count > 128) Received.TryDequeue(out _);
+                                }
                             }
                             else line.Append(chars[i]);
                             if (line.Length > 65536) throw new IOException();
