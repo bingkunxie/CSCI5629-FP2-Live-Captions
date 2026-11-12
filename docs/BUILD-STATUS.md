@@ -3,9 +3,15 @@
 ## Two-Quest implementation verification — November 11, 2026
 
 - Implemented LAN turn arbitration, fixed device roles, source-language wait messages, peer result display and disconnect/timeout recovery. Added an optional USB pairing route for isolated Wi-Fi.
-- Full Unity 6000.6.0f1 EditMode run: **54 passed, 0 failed**. This includes the prior caption/audio/notebook/voice tests, gateway request construction and new controller-level wait-language/capture-blocking tests.
+- Full Unity 6000.6.0f1 EditMode run: **56 passed, 0 failed**. This includes the prior caption/audio/notebook/voice tests, gateway request construction and new controller-level wait-language/capture-blocking tests and Android network-policy path/idempotency tests.
 - Python relay tests: **12 passed**, including two real TCP clients, competing requests, Unicode result delivery, role rejection, disconnect and lease expiry.
-- Android build and hardware check are in progress. These results do not establish two-physical-headset behavior or real gateway accent availability.
+- Android development APK built successfully: 116,377,560 bytes. The obsolete A4 shader check passed. A scan of decompressed APK entries found neither the configured course key nor the private pairing token, and no private notebook/config files.
+- APK SHA-256: 5532d7feb3f37949f361336bb7bf3347457701ac77e3d0ef9612d207382fe13e.
+- Installed the APK on the connected Quest 3 and provisioned private configuration. Quest-to-laptop pairing protocol connectivity passed through USB reverse (real device received state messages). Direct Wi-Fi TCP connectivity did not pass on this network; creating a narrowly scoped firewall rule was denied by Windows, so no firewall change was made.
+- A Quest system dialog is blocking the application launch. Android logs explicitly report "a Reprojected OS dialog is currently showing." The user must clear the actual headset dialog before app-level visual/controller checks can continue. This is not evidence of an app crash.
+- Two-physical-headset behavior and real gateway accent availability remain unverified.
+- Windows build fixes: independent Android toolchain, short Gradle cache alias to avoid the 260-character Ninja limit, and a callback that accepts either Gradle-root or unityLibrary paths while preserving HTTPS-only defaults and loopback-only development HTTP.
+- The Meta SDK emitted an editor telemetry Process.Kill exception after Unity reported build success. The produced APK passed structural checks and installed successfully; this exception was not an Android application crash.
 - Course gateway tests remain deferred at the user's request.
 
 ## Earlier source checkpoint — November 11, 2026

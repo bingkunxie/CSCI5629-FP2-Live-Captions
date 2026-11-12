@@ -57,3 +57,7 @@ This drives speaking, processing and reviewing messages, then releases the turn.
 
 
 If the Wi-Fi blocks client traffic or the laptop firewall cannot be configured, add --usb to configure_quest_pair.py. It uses adb reverse for the pairing port and stores 127.0.0.1 on that headset. Keep USB connected; repeat provisioning after reconnecting/rebooting to restore the reverse mapping. Both headsets can be tested through the same laptop with their respective serials and roles. Remove --usb and provision the LAN config again for wireless use.
+
+## Windows build note
+
+For Unity 6000.6 on Windows, keep the editor, project and GRADLE_USER_HOME paths short. Ninja can reject long paths inside Gradle's transformed GameActivity dependency even when the main project uses a short alias. A junction under D:/download/CODEX can preserve task storage while providing a short cache path. Use an independent Android toolchain for this editor; do not run installers through links to another editor's toolchain.
