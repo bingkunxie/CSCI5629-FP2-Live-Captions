@@ -38,3 +38,5 @@ Restart FP2 in standalone mode. The import is applied to private app storage. In
 This release supports one A/B room with two participants. Hand shortcuts currently bind thumbs-up to Like; other reactions use controller selection. No automatic meeting summary, speech-driven completion, cloud sync or arbitrary gesture rebinding is claimed. Actual two-headset wireless and physical hand-pose usability remain device acceptance checks; offline automated validation does not establish those hardware results.
 
 [中文操作说明](Meeting-Tools.zh-CN.md)
+
+Controller binding correction in 0.3.2: [thumbstick input details and offline tests](Controller-Input.md).

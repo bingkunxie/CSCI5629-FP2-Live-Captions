@@ -31,6 +31,7 @@ public sealed class MeetingOverlay : MonoBehaviour
     private double toastUntil;
     private TouchScreenKeyboard keyboard;
     private InputAction reactionMenuAction, agendaEditAction;
+    private bool rightMenuHeld=true, leftMenuHeld=true;
     public bool GestureShortcut=true;
     public bool ModalOpen => palette != null && (palette.gameObject.activeSelf || editor.gameObject.activeSelf);
     public event Action<string> ReactionChosen;
@@ -80,10 +81,12 @@ public sealed class MeetingOverlay : MonoBehaviour
         var pointer=NewRect("Controller pointer",anchor,Vector2.zero,new Vector2(12,12));
         pointer.anchorMin=pointer.anchorMax=pointer.pivot=new Vector2(.5f,.5f);
         cursor=pointer.gameObject.AddComponent<Image>();cursor.color=new Color(1,.9f,.35f);cursor.raycastTarget=false;
-        reactionMenuAction=new InputAction("Reactions menu",InputActionType.Button,"<XRController>{RightHand}/primary2DAxisClick");
-        reactionMenuAction.AddBinding("<Keyboard>/f2");reactionMenuAction.performed+=_=>TogglePalette();reactionMenuAction.Enable();
-        agendaEditAction=new InputAction("Agenda editor",InputActionType.Button,"<XRController>{LeftHand}/primary2DAxisClick");
-        agendaEditAction.AddBinding("<Keyboard>/f3");agendaEditAction.performed+=_=>OpenEditor();agendaEditAction.Enable();
+        reactionMenuAction=new InputAction("Reactions menu",InputActionType.Button,"<XRController>{RightHand}/{Primary2DAxisClick}");
+        reactionMenuAction.AddBinding("<XRController>{RightHand}/thumbstickClicked");
+        reactionMenuAction.AddBinding("<Keyboard>/f2");reactionMenuAction.Enable();
+        agendaEditAction=new InputAction("Agenda editor",InputActionType.Button,"<XRController>{LeftHand}/{Primary2DAxisClick}");
+        agendaEditAction.AddBinding("<XRController>{LeftHand}/thumbstickClicked");
+        agendaEditAction.AddBinding("<Keyboard>/f3");agendaEditAction.Enable();
         DrawAgenda();
     }
 
@@ -258,8 +261,47 @@ public sealed class MeetingOverlay : MonoBehaviour
         if(hover!=null){hover.click();return true;}
         return ModalOpen; // Never record while operating the palette or editor.
     }
+
+    // OpenXR exposes Primary2DAxisClick as a usage, not a control named primary2DAxisClick.
+    // Merge providers before edge detection: one physical press must never open then close.
+    private void PollMenuButtons()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        if(!Application.isFocused){rightMenuHeld=leftMenuHeld=true;return;}
+#endif
+        bool right=reactionMenuAction!=null&&reactionMenuAction.IsPressed();
+        bool left=agendaEditAction!=null&&agendaEditAction.IsPressed();
+#if UNITY_ANDROID && !UNITY_EDITOR
+        var rightDevice=UnityEngine.XR.InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+        var leftDevice=UnityEngine.XR.InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
+        right |= rightDevice.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primary2DAxisClick,out bool rightClick)&&rightClick;
+        left |= leftDevice.TryGetFeatureValue(UnityEngine.XR.CommonUsages.primary2DAxisClick,out bool leftClick)&&leftClick;
+        // Meta's existing controller state is also available when a dynamically created
+        // InputAction was too late to join the current OpenXR session action set.
+        right |= OVRInput.Get(OVRInput.RawButton.RThumbstick,OVRInput.Controller.RTouch);
+        left |= OVRInput.Get(OVRInput.RawButton.LThumbstick,OVRInput.Controller.LTouch);
+#endif
+        ApplyMenuButtons(right,left);
+    }
+    private void ApplyMenuButtons(bool right,bool left)
+    {
+        bool rightDown=right&&!rightMenuHeld, leftDown=left&&!leftMenuHeld;
+        rightMenuHeld=right;leftMenuHeld=left;
+        if(rightDown)
+        {
+            TogglePalette();
+            Debug.Log("[FP2 Input] Right stick pressed; reactions="+(palette.gameObject.activeSelf?"open":"closed"));
+        }
+        else if(leftDown)
+        {
+            OpenEditor();
+            Debug.Log("[FP2 Input] Left stick pressed; agenda=open");
+        }
+    }
+
     private void Update()
     {
+        PollMenuButtons();
         UpdatePointer();
         if(toast!=null&&toast.gameObject.activeSelf)
         {
@@ -278,6 +320,6 @@ public sealed class MeetingOverlay : MonoBehaviour
 #endif
     }
     private void OnEnable(){reactionMenuAction?.Enable();agendaEditAction?.Enable();}
-    private void OnDisable(){reactionMenuAction?.Disable();agendaEditAction?.Disable();if(keyboard!=null)keyboard.active=false;}
+    private void OnDisable(){rightMenuHeld=leftMenuHeld=true;reactionMenuAction?.Disable();agendaEditAction?.Disable();if(keyboard!=null)keyboard.active=false;}
     private void OnDestroy(){reactionMenuAction?.Dispose();agendaEditAction?.Dispose();}
 }

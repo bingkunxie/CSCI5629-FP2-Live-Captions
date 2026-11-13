@@ -1,4 +1,4 @@
-**Latest: v0.3.1 source-language UI** — Mandarin source uses Chinese UI; English source uses English UI. Installed on Quest 3; 70 Unity tests passed. [UI language guide](docs/UI-Language.md) · [Release APK](https://github.com/bingkunxie/CSCI5629-FP2-Live-Captions/releases/tag/v0.3.1-source-language-ui).
+**Latest: v0.3.2 thumbstick fix** — corrected right-stick reactions and left-stick agenda input. 73 Unity tests passed; APK installed on Quest 3. [Input details](docs/Controller-Input.md) · [Release APK](https://github.com/bingkunxie/CSCI5629-FP2-Live-Captions/releases/tag/v0.3.2-thumbstick-fix).
 
 Independent Unity project for Quest 3 Mandarin–English captions, optional translated speech, and thumbs-up effects.
 

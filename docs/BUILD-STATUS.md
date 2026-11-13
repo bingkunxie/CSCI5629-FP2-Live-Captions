@@ -1,5 +1,15 @@
 # Final project build status
 
+## Thumbstick input fix — November 12, 2026
+
+- Fixed the reported right-thumbstick menu failure. The old control-name path does not resolve on the installed Oculus Touch/Touch Plus layouts; Primary2DAxisClick is a usage and thumbstickClicked is the control.
+- Corrected right/left handed bindings and added Unity XR/Meta state fallback for runtime-created action sets. Sources are combined before edge detection to prevent hold-repeat/double toggles. Release is required after focus loss/disable.
+- **73 Unity EditMode tests passed**. Isolated input tests use the actual SDK layouts, reproduce the old unresolved binding, and verify correct right-stick open/hold/release/close, left-stick agenda selection, nonactivation by A/touch, and resume behavior.
+- Android **0.3.2 / versionCode 5**, 116,411,516 bytes, built and installed on the connected Quest. The app process exists, but foreground readiness was blocked by the Quest Guardian/system dialog; no Ready marker was observed during the unattended check.
+- SHA-256: 464beeeda29d35d09f5b6ddec35c5ca544208d837d009595e897d4d475492c2b. Decompressed credential/private-data and obsolete-shader checks passed.
+- User requested autonomous offline completion without questions. Physical button acceptance is not claimed from simulated input tests; no physical right-stick event was observed at this checkpoint. Two-real-headset wireless and remaining campus-dependent trials are outside the verified results.
+- [Controller input details](Controller-Input.md). No campus gateway request was needed for this fix.
+
 ## Source-language UI — November 12, 2026
 
 - Added a shared 154-entry UI catalog. Mandarin source selects Simplified Chinese UI; English source selects English UI, independent of the translation target.

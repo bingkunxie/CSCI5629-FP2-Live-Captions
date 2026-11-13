@@ -4,15 +4,20 @@ using FP2.Captions;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.LowLevel;
 
 public class MeetingOverlayTests
 {
     private const BindingFlags Hidden=BindingFlags.Instance|BindingFlags.NonPublic;
     private Type type;
+    private InputTestFixture inputFixture;
     private Component ui;
     private UnityEngine.Object host;
     [SetUp] public void SetUp()
     {
+        inputFixture=new InputTestFixture();inputFixture.Setup();
         EditorSceneManager.OpenScene("Assets/Scenes/FP2LiveCaptions.unity");
         var hostType=Type.GetType("QuestLiveCaptions, Assembly-CSharp",true);
         host=UnityEngine.Object.FindFirstObjectByType(hostType);
@@ -28,8 +33,12 @@ public class MeetingOverlayTests
     private RectTransform Rect(string name)=>(RectTransform)type.GetField(name,Hidden).GetValue(ui);
     [TearDown] public void TearDown()
     {
-        if(ui!=null)UnityEngine.Object.DestroyImmediate(ui);
-        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        try
+        {
+            if(ui!=null)UnityEngine.Object.DestroyImmediate(ui);
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        }
+        finally {inputFixture?.TearDown();inputFixture=null;}
     }
     [Test] public void AgendaEditorConsumesRecordingTriggerWithoutGatewayOrMicrophone()
     {
@@ -114,5 +123,62 @@ public class MeetingOverlayTests
         Assert.That(TextField("message"),Is.EqualTo("Reconnect to save the shared agenda."));
         Assert.That(TextField("toastText"),Is.EqualTo("You\nLike\nLocal preview"));
         Assert.That(type.GetField("toastUntil",Hidden).GetValue(ui),Is.EqualTo(expiry));
+    }
+
+    [TestCase("OculusTouchControllerProfile+OculusTouchController")]
+    [TestCase("MetaQuestTouchPlusControllerProfile+QuestTouchPlusController")]
+    public void ActualOpenXRThumbstickBindingOpensOncePerPressAndKeepsHandsSeparate(string layoutClass)
+    {
+        var deviceType=Type.GetType("UnityEngine.XR.OpenXR.Features.Interactions."+layoutClass+", Unity.XR.OpenXR",true);
+        InputSystem.RegisterLayout(Type.GetType("UnityEngine.XR.OpenXR.Input.HapticControl, Unity.XR.OpenXR",true),"Haptic");
+        InputSystem.RegisterLayout(deviceType.GetProperty("devicePose").PropertyType,"Pose");
+        InputSystem.RegisterLayout(deviceType);
+        var right=InputSystem.AddDevice(deviceType.Name);
+        var left=InputSystem.AddDevice(deviceType.Name);
+        InputSystem.SetDeviceUsage(right,"RightHand");InputSystem.SetDeviceUsage(left,"LeftHand");
+        void Set(UnityEngine.InputSystem.InputDevice device,string control,float value)
+        {
+            using(StateEvent.From(device,out var e))
+            {
+                device.GetChildControl<ButtonControl>(control).WriteValueIntoEvent(value,e);
+                InputSystem.QueueEvent(e);
+            }
+            InputSystem.Update();Call("PollMenuButtons");
+        }
+        try
+        {
+            using(var old=new InputAction(binding:"<XRController>{RightHand}/primary2DAxisClick"))
+            {
+                old.Enable();Assert.That(old.controls.Count,Is.Zero,"Reproduces the previous invalid control-name binding.");
+            }
+            var action=(InputAction)type.GetField("reactionMenuAction",Hidden).GetValue(ui);
+            Assert.That(action.controls.Count,Is.GreaterThan(0),"Corrected path must resolve a right-hand control.");
+            Call("PollMenuButtons");
+            Set(right,"primaryButton",1);Set(right,"thumbstickTouched",1);
+            Assert.That(Rect("palette").gameObject.activeSelf,Is.False,"A and stick touch must not open reactions.");
+            Set(right,"thumbstickClicked",1);
+            Assert.That(right.GetChildControl<ButtonControl>("thumbstickClicked").isPressed,Is.True,"Simulated runtime press must reach the controller state.");
+            Assert.That(action.IsPressed(),Is.True,"Resolved action must read the pressed state.");
+            Assert.That(Rect("palette").gameObject.activeSelf,Is.True);
+            for(int i=0;i<4;i++)Call("PollMenuButtons");
+            Assert.That(Rect("palette").gameObject.activeSelf,Is.True,"Holding must not repeatedly toggle.");
+            Set(right,"thumbstickClicked",0);Set(right,"thumbstickClicked",1);
+            Assert.That(Rect("palette").gameObject.activeSelf,Is.False,"Next distinct press closes.");
+            Set(right,"thumbstickClicked",0);Set(left,"thumbstickClicked",1);
+            Assert.That(Rect("editor").gameObject.activeSelf,Is.True);
+            Assert.That(Rect("palette").gameObject.activeSelf,Is.False,"Left stick opens agenda, not reactions.");
+        }
+        finally {InputSystem.RemoveDevice(right);InputSystem.RemoveDevice(left);}
+    }
+    [Test] public void ResumeRequiresReleaseAndMergedHeldInputDoesNotDoubleToggle()
+    {
+        Call("ApplyMenuButtons",true,false);
+        Assert.That(Rect("palette").gameObject.activeSelf,Is.False,"Ignore a stick already held at startup/resume.");
+        Call("ApplyMenuButtons",false,false);Call("ApplyMenuButtons",true,false);
+        Assert.That(Rect("palette").gameObject.activeSelf,Is.True);
+        Call("ApplyMenuButtons",true,false);Call("ApplyMenuButtons",true,false);
+        Assert.That(Rect("palette").gameObject.activeSelf,Is.True);
+        Call("OnDisable");Call("OnEnable");Call("ApplyMenuButtons",true,false);
+        Assert.That(Rect("palette").gameObject.activeSelf,Is.True,"Resume must not create a new press.");
     }
 }
